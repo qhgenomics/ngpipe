@@ -1,15 +1,15 @@
 import os
 
 
-headers = ["MLST", "abcZ", "adk", "aroE", "fumC", "gdh", "pdhC", "pgm", "NgSTAR", "penA NgSTAR", "penA comment",
+headers = ["Sample", "MLST", "abcZ", "adk", "aroE", "fumC", "gdh", "pdhC", "pgm", "NgSTAR", "penA NgSTAR", "penA comment",
            "mtrR NgSTAR", "mtrR comment", "porB NgSTAR", "porB comment", "ponA NgSTAR", "ponA comment",
            "gyrA NgSTAR", "gyrA comment", "parC NgSTAR", "parC comment", "23S NgSTAR", "23S comment", "NgMAST",
-           "porB NgMAST", "tbpB", "NEIS2357 BetaLact Genotype", "NEIS2210_tetM Plasmid"]
+           "porB NgMAST", "tbpB", "rplF", "rplF species", "rplf species comment", "ppnG coverage", "ppnG depth"]
 
-outstring = ""
+outstring = snakemake.params.sample
 with open(snakemake.input.mlst) as f:
     contig, scheme, profile, abcZ, adk, aroE, fumC, gdh, pdhC, pgm = f.readline().rstrip().split("\t")
-outstring += profile
+outstring += "\t" + profile
 outstring += "\t" + abcZ.split('(')[1].split(')')[0]
 outstring += "\t" + adk.split('(')[1].split(')')[0]
 outstring += "\t" + aroE.split('(')[1].split(')')[0]
@@ -108,22 +108,36 @@ with open(snakemake.input.ngmast) as f:
     contig, scheme, profile, porB, tbpB = f.readline().rstrip().split("\t")
 
 
+
+
 outstring += "\t" + profile
 outstring += "\t" + porB.split('(')[1].split(')')[0]
 outstring += "\t" + tbpB.split('(')[1].split(')')[0]
 
+rplf_dict = {}
+with open(os.path.join(snakemake.params.mlst_dir, "db", "pubmlst", "rplf", "rplf.txt")) as f:
+    for line in f:
+        profile, rplf, species, comment = line.rstrip().split("\t")
+        rplf_dict[profile] = [profile, species, comment]
+
+
+with open(snakemake.input.rplf) as f:
+    fasta, scheme, profile, rplf = f.readline().rstrip().split("\t")
+
+
+if profile in rplf_dict:
+    outstring += "\t" + "\t".join(rplf_dict[profile])
+else:
+    outstring += "\t" + profile + "\tmissing\tmissing"
+
 with open(snakemake.input.ppng_cov) as f:
     f.readline()
     cov = f.readline().rstrip().split()[1]
+    depth = f.readline().rstrip().split()[1]
 
-outstring += "\t" + cov
+outstring += "\t" + cov + "\t" + depth
 
 
-with open(snakemake.input.rplf_cov) as f:
-    f.readline()
-    cov = f.readline().rstrip().split()[1]
-
-outstring += "\t" + cov
 
 
 with open(snakemake.output.tsv, 'w') as o:

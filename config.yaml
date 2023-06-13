@@ -1,2 +1,4 @@
 mlst_dir:
   /path/to/tseemann/mlst
+ppng_fasta:
+  /path/to/ngpipe/data/ppng_target.fasta

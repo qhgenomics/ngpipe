@@ -9,6 +9,8 @@ elif db == "ngmast":
     scheme = "71"
 elif db == "mlst":
     scheme = "1"
+elif db == "rplf":
+    scheme = "42"
 
 params_mlst_dir = snakemake.params.mlst_dir
 
@@ -54,16 +56,24 @@ if version != online_version:
             loci_alleles += "?return_all=1"
             response = urlopen(loci_alleles)
             json_alleles = json.loads(response.read())
+            db_comments = {}
+            with open(loci_local + '.comments') as f:
+                for line in f:
+                    allele, comment = line.rstrip().split("\t")
+                    db_comments[allele] = comment
             with open(loci_local + '.comments', 'w') as o:
                 for j in json_alleles["alleles"]:
-                    response = urlopen(j)
-                    json_allele = json.loads(response.read())
-                    allele_id = json_allele["allele_id"]
-                    if "comments" in json_allele:
-                        comments = json_allele["comments"]
+                    if j.split('/')[-1] in db_comments:
+                        o.write("{}\t{}\n".format(j.split('/')[-1], db_comments[j.split('/')[-1]]))
                     else:
-                        comments = "None"
-                    o.write("{}\t{}\n".format(allele_id, comments))
+                        response = urlopen(j)
+                        json_allele = json.loads(response.read())
+                        allele_id = json_allele["allele_id"]
+                        if "comments" in json_allele:
+                            comments = json_allele["comments"]
+                        else:
+                            comments = "None"
+                        o.write("{}\t{}\n".format(allele_id, comments))
 
 
     with open(version_log, 'w') as o:
