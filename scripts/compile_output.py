@@ -58,42 +58,42 @@ allele = penA.split('(')[1].split(')')[0]
 outstring += "\t" + allele
 comment = []
 for i in allele.split(','):
-    comment.append(comment_dict["penA"][allele.replace("~", "").replace("?", "")])
+    comment.append(comment_dict["penA"][i.replace("~", "").replace("?", "")])
 outstring += "\t" + ",".join(comment)
 
 allele = mtrR.split('(')[1].split(')')[0]
 outstring += "\t" + allele
 comment = []
 for i in allele.split(','):
-    comment.append(comment_dict["mtrR"][allele.replace("~", "").replace("?", "")])
+    comment.append(comment_dict["mtrR"][i.replace("~", "").replace("?", "")])
 outstring += "\t" + ",".join(comment)
 
 allele = porB.split('(')[1].split(')')[0]
 outstring += "\t" + allele
 comment = []
 for i in allele.split(','):
-    comment.append(comment_dict["porB"][allele.replace("~", "").replace("?", "")])
+    comment.append(comment_dict["porB"][i.replace("~", "").replace("?", "")])
 outstring += "\t" + ",".join(comment)
 
 allele = ponA.split('(')[1].split(')')[0]
 outstring += "\t" + allele
 comment = []
 for i in allele.split(','):
-    comment.append(comment_dict["ponA"][allele.replace("~", "").replace("?", "")])
+    comment.append(comment_dict["ponA"][i.replace("~", "").replace("?", "")])
 outstring += "\t" + ",".join(comment)
 
 allele = gyrA.split('(')[1].split(')')[0]
 outstring += "\t" + allele
 comment = []
 for i in allele.split(','):
-    comment.append(comment_dict["gyrA"][allele.replace("~", "").replace("?", "")])
+    comment.append(comment_dict["gyrA"][i.replace("~", "").replace("?", "")])
 outstring += "\t" + ",".join(comment)
 
 allele = parC.split('(')[1].split(')')[0]
 outstring += "\t" + allele
 comment = []
 for i in allele.split(','):
-    comment.append(comment_dict["parC"][allele.replace("~", "").replace("?", "")])
+    comment.append(comment_dict["parC"][i.replace("~", "").replace("?", "")])
 outstring += "\t" + ",".join(comment)
 
 allele = rna23S.split('(')[1].split(')')[0]
