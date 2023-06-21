@@ -102,8 +102,21 @@ rule assemble_reads:
     output:
         scaffolds = "step2_assembly/metaspades_{sample}/scaffolds.fasta"
     threads: 24
-    shell:
-        "spades.py --meta -k 21,31,41,51,61,71,81,91,101,111 -o step2_assembly/metaspades_{wildcards.sample} -1 {params.read_dir}/{wildcards.sample}_R1.fastq.gz -2 {params.read_dir}/{wildcards.sample}_R2.fastq.gz -t {threads}"
+    run:
+        create_ntc = False
+        try:
+            subprocess.Popen(
+                "spades.py --meta -k 21,31,41,51,61,71,81,91,101,111 -o step2_assembly/metaspades_{} \
+                -1 {}/{}_R1.fastq.gz -2 {}/{}_R2.fastq.gz -t {}".format(
+                wildcards.sample, params.read_dir, wildcards.sample, params.read_dir, wildcards.sample, threads),
+            shell=True).wait()
+        except subprocess.CalledProcessError:
+            pass
+        if not os.path.exists(output.scaffolds):
+            with open(output.scaffolds, 'w') as o:
+                o.write(">ntc\nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn\n")
+
+
 
 rule ng_typing:
     input:
