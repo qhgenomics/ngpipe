@@ -58,13 +58,13 @@ with open(snakemake.input.mlst) as f:
     new_profile = []
     for i in [abcZ, adk, aroE, fumC, gdh, pdhC, pgm]:
         if ',' in i:
-            new_allele = resolve_mult_allele(i, "ngstar")
+            new_allele = resolve_mult_allele(i, "mlst")
         else:
             new_allele = i
         new_profile.append(new_allele)
     if new_profile != [abcZ, adk, aroE, fumC, gdh, pdhC, pgm]:
         penA, mtrR, porB, ponA, gyrA, parC, rna23S = new_profile
-        profile = update_profile(new_profile, "ngstar")
+        profile = update_profile(new_profile, "mlst")
 
 
 outstring += "\t" + profile
