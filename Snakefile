@@ -93,28 +93,39 @@ rule qc:
         qc1 = "step1_fastqc/{sample}_R1_fastqc.html",
         qc2 = "step1_fastqc/{sample}_R2_fastqc.html"
     threads: 24
-    shell:
-        "fastqc {params.read_dir}/{wildcards.sample}_R1.fastq.gz {params.read_dir}/{wildcards.sample}_R2.fastq.gz -o step1_fastqc -t {threads}"
+    run:
+        import subprocess
+        if params.read_dir != "none":
+            subprocess.Popen("fastqc {}/{}_R1.fastq.gz {}/{}_R2.fastq.gz -o step1_fastqc -t {}".format(
+                params.read_dir, wildcards.sample, params.read_dir, wildcards.sample,threads), shell=True).wait()
+        else:
+            subprocess.Popen("mkdir -p step1_fastqc && touch {} && touch {}".format(output.qc1, output.qc2), shell=True).wait()
 
 rule assemble_reads:
     params:
-        read_dir = config["read_dir"]
+        read_dir = config["read_dir"],
+        contig_dir = config["contig_dir"]
     output:
         scaffolds = "step2_assembly/metaspades_{sample}/scaffolds.fasta"
     threads: 24
     run:
-        create_ntc = False
-        try:
+        import subprocess
+        if params.contig_dir != "none":
             subprocess.Popen(
-                "spades.py --meta -k 21,31,41,51,61,71,81,91,101,111 -o step2_assembly/metaspades_{} \
-                -1 {}/{}_R1.fastq.gz -2 {}/{}_R2.fastq.gz -t {}".format(
-                wildcards.sample, params.read_dir, wildcards.sample, params.read_dir, wildcards.sample, threads),
-            shell=True).wait()
-        except subprocess.CalledProcessError:
-            pass
-        if not os.path.exists(output.scaffolds):
-            with open(output.scaffolds, 'w') as o:
-                o.write(">ntc\nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn\n")
+                "mkdir -p step2_assembly/metaspades_{} && cp {}/{}.fasta {}".format(
+                    wildcards.sample, params.contig_dir, wildcards.sample, output.scaffolds), shell=True).wait()
+        else:
+            try:
+                subprocess.Popen(
+                    "spades.py --meta -k 21,31,41,51,61,71,81,91,101,111 -o step2_assembly/metaspades_{} \
+                    -1 {}/{}_R1.fastq.gz -2 {}/{}_R2.fastq.gz -t {}".format(
+                    wildcards.sample, params.read_dir, wildcards.sample, params.read_dir, wildcards.sample, threads),
+                shell=True).wait()
+            except subprocess.CalledProcessError:
+                pass
+            if not os.path.exists(output.scaffolds):
+                with open(output.scaffolds, 'w') as o:
+                    o.write(">ntc\nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn\n")
 
 
 
@@ -149,13 +160,23 @@ rule abricate:
 rule ppng_mapping:
     params:
         read_dir = config["read_dir"],
+        contig_dir = config["contig_dir"],
         reference = config["ppng_fasta"]
     output:
         cov = "step5_ppng/{sample}_ppng_coverage.txt",
         bam = "step5_ppng/{sample}_ppng.bam"
-    shell:
-        "minimap2 -ax sr {params.reference} {params.read_dir}/{wildcards.sample}_R1.fastq.gz {params.read_dir}/{wildcards.sample}_R2.fastq.gz | samtools view -bS - | samtools sort -o {output.bam} && "
-        "samtools depth -aa {output.bam} > {output.cov}"
+    run:
+        import subprocess
+        if params.read_dir != "none":
+            subprocess.Popen("minimap2 -ax sr {} {}/{}_R1.fastq.gz {}/{}_R2.fastq.gz | samtools view -bS - | "
+                             "samtools sort -o {} && samtools depth -aa {} > {}".format(
+                params.reference, params.read_dir, wildcards.sample, params.read_dir,
+                wildcards.sample, output.bam, output.bam, output.cov), shell=True).wait()
+        else:
+            subprocess.Popen("minimap2 -ax asm5 {} {}/{}.fasta | samtools view -bS - | samtools sort -o {} && "
+                             "samtools depth -aa {} > {}".format(params.reference, params.contig_dir,
+                wildcards.sample, output.bam, output.bam, output.cov), shell=True).wait()
+
 
 
 
