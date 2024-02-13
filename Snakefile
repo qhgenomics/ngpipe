@@ -21,7 +21,40 @@ def get_samples(filename):
 
 rule all:
     input:
-        expand("step6_output/{sample}_summary.tsv", sample=get_samples(config["samples"]))
+        summary = "summary.tsv",
+        mst = "mst.svg"
+
+
+
+rule create_mst:
+    input:
+        summary = summary.tsv
+    output:
+        mst = "mst.svg"
+    script:
+        "scripts/create_mst.py"
+
+
+rule compile_output:
+    input:
+        summaries = expand("step6_output/{sample}_summary.tsv", sample=get_samples(config["samples"]))
+    output:
+        summary = "summary.tsv"
+    run:
+        first = True
+        with open(output.summary, 'w') as o:
+            for i in input.summaries:
+                with open(i) as f:
+                    if first:
+                        first = False
+                        o.write(f.readline())
+                    else:
+                        f.readline()
+                    o.write(f.readline())
+
+
+
+
 
 
 
