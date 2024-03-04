@@ -234,11 +234,29 @@ rule rplf_mapping:
 
 
 
-rule get_gene_coverage:
+rule get_rplf_coverage:
     input:
-        coverage = expand("step5_cov/{sample}_{gene}_coverage.txt", sample=wildcard.sample, gene=["rplf", "ppng"])
+        coverage = "step5_cov/{sample}_rplf_coverage.txt"
     output:
-        stats = expand("step5_cov/{sample}_{gene}.cov", sample=wildcard.sample, gene=["rplf", "ppng"])
+        stats = "step5_cov/{sample}_rplf.cov"
+    run:
+        with open(input.coverage) as f, open(output.stats, 'w') as o:
+            total_depth, total_cov, total = 0, 0, 0
+            for line in f:
+                ref, pos, cov = line.split()
+                total += 1
+                total_depth += float(cov)
+                if cov != '0':
+                    total_cov += 1
+            if total == 0:
+                total = 1
+            o.write("Bases: {}\nCoverage: {:.2%}\nDepth: {:.2f}".format(total, total_cov/total, total_depth/total))
+
+rule get_ppng_coverage:
+    input:
+        coverage = "step5_cov/{sample}_ppng_coverage.txt"
+    output:
+        stats = "step5_cov/{sample}_ppng.cov"
     run:
         with open(input.coverage) as f, open(output.stats, 'w') as o:
             total_depth, total_cov, total = 0, 0, 0
