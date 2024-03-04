@@ -28,7 +28,7 @@ rule all:
 
 rule create_mst:
     input:
-        summary = summary.tsv
+        summary = "summary.tsv"
     output:
         mst = "mst.svg"
     script:
