@@ -1,8 +1,8 @@
-# ngPipe
+# ngpipe
  
-ngPipe is a pipeline for typing _Neisseria gonorrhoeae_.
-It takes a folder of reads or contigs and runs Sequence typing for MLST, NG-STAR and NG-MAST typing.
-It also determines species using the rplF gene and checks for the presence of rplF.
+ngpipe is a pipeline for typing _Neisseria gonorrhoeae_.
+It takes a folder of reads or contigs and runs sequence typing for MLST, NG-STAR and NG-MAST typing.
+It also determines species using the rplF gene and checks for the presence of rplF and ppng.
 It will compile this information into a table and create a minimum spanning tree using MLST.
 
 ## Installation
@@ -49,16 +49,17 @@ Clone this repository
 
 
 ## Implementation
-ngPipe first checks for database updates to the NG-STAR, NG-MAST MLST and rplF schemes from pubMLST and downloads them to
-the MLST directory. It will then build a new index for MLST. If this is the first time
-running ngPIPE they will be downloaded from scratch.
+ngpipe first checks for database updates to the NG-STAR, NG-MAST MLST and rplF schemes from pubMLST and downloads them to
+the MLST directory. It then builds a new index for the software "mlst". If this is the first time
+running ngpipe they will be downloaded from scratch.
 
-If running on read sequences, reads are assembled using Spades. This pipeline is
-intended to be used with amplicons so parameters are used to assemble amplicons well and may
-result in suboptimal assemblies if run on isolate data.
+If running on read sequences, reads are assembled using Spades. This pipeline is intended to be used with amplicons and 
+thus parameters are used to primarily assemble amplicons well 
+which may result in suboptimal assemblies if run on isolate read data.
 
-Assembled contigs are then typed using Torsten Seeman's MLST. The ppnG gene is also
-detected by mapping reads or contigs to a reference. The output is then compiled. Some
-additional processing is done to the output to account for bugs in MLST (for example calling multiple alleles when a stop loss occurs).
+Assembled contigs are then typed using Torsten Seeman's software: mlst. Plasmid-mediated resistance in gonorrhoea is 
+detected via amplification of a region encmpassing the plasmid and the blaTEM gene. This region is detected by mapping 
+reads or contigs to a reference.. The output is then compiled. Some additional processing is done to the output to 
+account for bugs in the mlst software (for example calling multiple alleles when a stop loss occurs).
 
 Finally a minimum spanning tree will be drawn using networkx.

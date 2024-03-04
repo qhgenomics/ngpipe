@@ -50,7 +50,7 @@ def update_profile(profile, scheme):
 headers = ["Sample", "MLST", "abcZ", "adk", "aroE", "fumC", "gdh", "pdhC", "pgm", "NgSTAR", "penA NgSTAR", "penA comment",
            "mtrR NgSTAR", "mtrR comment", "porB NgSTAR", "porB comment", "ponA NgSTAR", "ponA comment",
            "gyrA NgSTAR", "gyrA comment", "parC NgSTAR", "parC comment", "23S NgSTAR", "23S comment", "NgMAST",
-           "porB NgMAST", "tbpB", "rplF", "rplF species", "rplf species comment", "ppnG coverage", "ppnG depth"]
+           "porB NgMAST", "tbpB", "rplF", "rplF species", "rplf species comment", "rplf_depth", "ppnG coverage", "ppnG depth"]
 
 outstring = snakemake.params.sample
 with open(snakemake.input.mlst) as f:
@@ -213,6 +213,14 @@ if profile in rplf_dict:
     outstring += "\t" + "\t".join(rplf_dict[profile])
 else:
     outstring += "\t" + profile + "\tmissing\tmissing"
+
+with open(snakemake.input.rplf_cov) as f:
+    f.readline()
+    cov = f.readline().rstrip().split()[1]
+    depth = f.readline().rstrip().split()[1]
+
+outstring +=  "\t" + depth
+
 
 with open(snakemake.input.ppng_cov) as f:
     f.readline()

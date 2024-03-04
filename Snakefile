@@ -196,8 +196,29 @@ rule ppng_mapping:
         contig_dir = config["contig_dir"],
         reference = config["ppng_fasta"]
     output:
-        cov = "step5_ppng/{sample}_ppng_coverage.txt",
-        bam = "step5_ppng/{sample}_ppng.bam"
+        cov = "step5_cov/{sample}_ppng_coverage.txt",
+        bam = "step5_cov/{sample}_ppng.bam"
+    run:
+        import subprocess
+        if params.read_dir != "none":
+            subprocess.Popen("minimap2 -ax sr {} {}/{}_R1.fastq.gz {}/{}_R2.fastq.gz | samtools view -bS - | "
+                             "samtools sort -o {} && samtools depth -aa {} > {}".format(
+                params.reference, params.read_dir, wildcards.sample, params.read_dir,
+                wildcards.sample, output.bam, output.bam, output.cov), shell=True).wait()
+        else:
+            subprocess.Popen("minimap2 -ax asm5 {} {}/{}.fasta | samtools view -bS - | samtools sort -o {} && "
+                             "samtools depth -aa {} > {}".format(params.reference, params.contig_dir,
+                wildcards.sample, output.bam, output.bam, output.cov), shell=True).wait()
+
+
+rule rplf_mapping:
+    params:
+        read_dir = config["read_dir"],
+        contig_dir = config["contig_dir"],
+        reference = config["rplf_fasta"]
+    output:
+        cov = "step5_cov/{sample}_rplf_coverage.txt",
+        bam = "step5_cov/{sample}_rplf.bam"
     run:
         import subprocess
         if params.read_dir != "none":
@@ -215,9 +236,9 @@ rule ppng_mapping:
 
 rule get_gene_coverage:
     input:
-        coverage = "step5_ppng/{sample}_ppng_coverage.txt"
+        coverage = expand("step5_cov/{sample}_{gene}_coverage.txt", gene=["rplf", "ppng"])
     output:
-        stats = "step5_ppng/{sample}_ppng.cov"
+        stats = expand("step5_cov/{sample}_{gene}.cov", gene=["rplf", "ppng"])
     run:
         with open(input.coverage) as f, open(output.stats, 'w') as o:
             total_depth, total_cov, total = 0, 0, 0
@@ -245,6 +266,7 @@ rule create_output:
         rplf = "step3_typing/{sample}_rplf.tsv",
         abricate = "step4_abricate/{sample}_abricate.txt",
         ppng_cov = "step5_ppng/{sample}_ppng.cov",
+        rplf_cov = "step5_"
     params:
         mlst_dir = config["mlst_dir"],
         sample = "{sample}"

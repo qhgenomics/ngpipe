@@ -2,6 +2,8 @@ mlst_dir:
   /path/to/tseemann/mlst
 ppng_fasta:
   /path/to/ngpipe/data/ppng_target.fasta
+rplf_fasta:
+  /path/to/ngpipe/data/rplf_target.fasta
 read_dir:
   none
 contig_dir:
