@@ -236,9 +236,9 @@ rule rplf_mapping:
 
 rule get_gene_coverage:
     input:
-        coverage = expand("step5_cov/{sample}_{gene}_coverage.txt", gene=["rplf", "ppng"])
+        coverage = expand("step5_cov/{sample}_{gene}_coverage.txt", sample=wildcard.sample, gene=["rplf", "ppng"])
     output:
-        stats = expand("step5_cov/{sample}_{gene}.cov", gene=["rplf", "ppng"])
+        stats = expand("step5_cov/{sample}_{gene}.cov", sample=wildcard.sample, gene=["rplf", "ppng"])
     run:
         with open(input.coverage) as f, open(output.stats, 'w') as o:
             total_depth, total_cov, total = 0, 0, 0
@@ -265,8 +265,8 @@ rule create_output:
         ngstar = "step3_typing/{sample}_ngstar.tsv",
         rplf = "step3_typing/{sample}_rplf.tsv",
         abricate = "step4_abricate/{sample}_abricate.txt",
-        ppng_cov = "step5_ppng/{sample}_ppng.cov",
-        rplf_cov = "step5_"
+        ppng_cov = "step5_cov/{sample}_ppng.cov",
+        rplf_cov = "step5_cov/{sample}_rplf.cov"
     params:
         mlst_dir = config["mlst_dir"],
         sample = "{sample}"
