@@ -4,7 +4,7 @@ ppng_fasta:
   /path/to/ngpipe/data/ppng_target.fasta
 rplf_fasta:
   /path/to/ngpipe/data/rplf_target.fasta
-rplf_fasta:
+rrna_fasta:
   /path/to/ngpipe/data/rrna_target.fasta
 position1:
   2045
