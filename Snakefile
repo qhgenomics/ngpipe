@@ -290,8 +290,8 @@ rule rrna_alleles:
                 freqdict2[base.lower()] += 1
         with open(output.tsv, 'w') as o:
             o.write("pos\ta\tt\tg\tc\n")
-            o.write("{}\t{}\t{}\t{}\t{}\n".format(params.position1, freqdict1=['a'], freqdict1=['t'], freqdict1=['g'], freqdict1=['c']))
-            o.write("{}\t{}\t{}\t{}\t{}\n".format(params.position2, freqdict2=['a'], freqdict2=['t'], freqdict2=['g'], freqdict2=['c']))
+            o.write("{}\t{}\t{}\t{}\t{}\n".format(params.position1, freqdict1['a'], freqdict1['t'], freqdict1['g'], freqdict1['c']))
+            o.write("{}\t{}\t{}\t{}\t{}\n".format(params.position2, freqdict2['a'], freqdict2['t'], freqdict2['g'], freqdict2['c']))
 
 
 rule get_rplf_coverage:
