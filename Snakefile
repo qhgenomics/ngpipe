@@ -31,6 +31,8 @@ rule create_mst:
         summary = "summary.tsv"
     output:
         mst = "mst.svg"
+    params:
+        previous_runs = config["previous_runs"]
     script:
         "scripts/create_mst.py"
 
@@ -231,7 +233,65 @@ rule rplf_mapping:
                              "samtools depth -aa {} > {}".format(params.reference, params.contig_dir,
                 wildcards.sample, output.bam, output.bam, output.cov), shell=True).wait()
 
+rule rrna_mapping:
+    params:
+        read_dir = config["read_dir"],
+        contig_dir = config["contig_dir"],
+        reference = config["rrna_fasta"]
+    output:
+        cov = "step5_cov/{sample}_rrna_coverage.txt",
+        bam = "step5_cov/{sample}_rrna.bam"
+    run:
+        import subprocess
+        if params.read_dir != "none":
+            subprocess.Popen("minimap2 -ax sr {} {}/{}_R1.fastq.gz {}/{}_R2.fastq.gz | samtools view -bS - | "
+                             "samtools sort -o {} && samtools depth -aa {} > {}".format(
+                params.reference, params.read_dir, wildcards.sample, params.read_dir,
+                wildcards.sample, output.bam, output.bam, output.cov), shell=True).wait()
+        else:
+            subprocess.Popen("minimap2 -ax asm5 {} {}/{}.fasta | samtools view -bS - | samtools sort -o {} && "
+                             "samtools depth -aa {} > {}".format(params.reference, params.contig_dir,
+                wildcards.sample, output.bam, output.bam, output.cov), shell=True).wait()
 
+
+rule rrna_alleles:
+    params:
+        reference = config["rrna_fasta"],
+        position1 = config["position1"],
+        position2 = config["position2"]
+    input:
+        bam = "step5_cov/{sample}_rrna.bam"
+    output:
+        tsv = "step5_cov/{sample}_rrna_alleles.tsv"
+    run:
+        import pysam
+        samfile = pysam.AlignmentFile(bam_file, "rb")
+        freqdict1 = {"a":0, "t":0, "c":0, "g":0}
+        for pileupcolumn in samfile.pileup("23S", params.position1):
+            if pileupcolumn.pos != params.position1:
+                continue
+            for pileupread in pileupcolumn.pileups:
+                if not pileupread.is_del and not pileupread.is_refskip:
+                    try:
+                        base = pileupread.alignment.query_sequence[pileupread.query_position]
+                    except IndexError:
+                        pass
+                freqdict1[base.lower()] += 1
+        freqdict2 = {"a":0, "t":0, "c":0, "g":0}
+        for pileupcolumn in samfile.pileup("23S", params.position2):
+            if pileupcolumn.pos != params.position2:
+                continue
+            for pileupread in pileupcolumn.pileups:
+                if not pileupread.is_del and not pileupread.is_refskip:
+                    try:
+                        base = pileupread.alignment.query_sequence[pileupread.query_position]
+                    except IndexError:
+                        pass
+                freqdict2[base.lower()] += 1
+        with open(output.tsv, 'w') as o:
+            o.write("pos\ta\tt\tg\tc\n")
+            o.write("{}\t{}\t{}\t{}\t{}\n".format(params.position1, freqdict1=['a'], freqdict1=['t'], freqdict1=['g'], freqdict1=['c']))
+            o.write("{}\t{}\t{}\t{}\t{}\n".format(params.position2, freqdict2=['a'], freqdict2=['t'], freqdict2=['g'], freqdict2=['c']))
 
 
 rule get_rplf_coverage:
@@ -284,10 +344,13 @@ rule create_output:
         rplf = "step3_typing/{sample}_rplf.tsv",
         abricate = "step4_abricate/{sample}_abricate.txt",
         ppng_cov = "step5_cov/{sample}_ppng.cov",
-        rplf_cov = "step5_cov/{sample}_rplf.cov"
+        rplf_cov = "step5_cov/{sample}_rplf.cov",
+        rrna_alleles = "step5_cov/{sample}_rrna_alleles.tsv"
     params:
         mlst_dir = config["mlst_dir"],
-        sample = "{sample}"
+        sample = "{sample}",
+        position1 = config["position1"],
+        position2 = config["position2"]
     output:
         tsv = "step6_output/{sample}_summary.tsv"
     script:

@@ -50,7 +50,8 @@ def update_profile(profile, scheme):
 headers = ["Sample", "MLST", "abcZ", "adk", "aroE", "fumC", "gdh", "pdhC", "pgm", "NgSTAR", "penA NgSTAR", "penA comment",
            "mtrR NgSTAR", "mtrR comment", "porB NgSTAR", "porB comment", "ponA NgSTAR", "ponA comment",
            "gyrA NgSTAR", "gyrA comment", "parC NgSTAR", "parC comment", "23S NgSTAR", "23S comment", "NgMAST",
-           "porB NgMAST", "tbpB", "rplF", "rplF species", "rplf species comment", "rplf_depth", "ppnG coverage", "ppnG depth"]
+           "porB NgMAST", "tbpB", "rplF", "rplF species", "rplf species comment", "rplf_depth", "ppnG coverage", "ppnG depth",
+           "23S_bases_pos{}:a:t:g:c".format(snakemake.params.position1), "23S_bases_pos{}:a:t:g:c".format(snakemake.param.position2)]
 
 outstring = snakemake.params.sample
 with open(snakemake.input.mlst) as f:
@@ -229,7 +230,12 @@ with open(snakemake.input.ppng_cov) as f:
 
 outstring += "\t" + cov + "\t" + depth
 
-
+with open(snakemake.input.rrna_alleles) as f:
+    f.readline()
+    pos, a, t, g, c = f.readline().split()
+    outstring += "\t{}:{}:{}:{}".format(a,t,g,c)
+    pos, a, t, g, c = f.readline().split()
+    outstring += "\t{}:{}:{}:{}".format(a,t,g,c)
 
 
 with open(snakemake.output.tsv, 'w') as o:
