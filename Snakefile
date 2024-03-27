@@ -250,8 +250,8 @@ rule rrna_mapping:
                 wildcards.sample, output.bam, output.bam, output.cov), shell=True).wait()
         else:
             subprocess.Popen("minimap2 -ax asm5 {} {}/{}.fasta | samtools view -bS - | samtools sort -o {} && "
-                             "samtools depth -aa {} > {}".format(params.reference, params.contig_dir,
-                wildcards.sample, output.bam, output.bam, output.cov), shell=True).wait()
+                             "samtools index {}".format(params.reference, params.contig_dir,
+                              wildcards.sample, output.bam, output.bam), shell=True).wait()
 
 
 rule rrna_alleles:
