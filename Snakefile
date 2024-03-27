@@ -265,7 +265,7 @@ rule rrna_alleles:
         tsv = "step5_cov/{sample}_rrna_alleles.tsv"
     run:
         import pysam
-        samfile = pysam.AlignmentFile(bam_file, "rb")
+        samfile = pysam.AlignmentFile(bam, "rb")
         freqdict1 = {"a":0, "t":0, "c":0, "g":0}
         for pileupcolumn in samfile.pileup("23S", params.position1):
             if pileupcolumn.pos != params.position1:
