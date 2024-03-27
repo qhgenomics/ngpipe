@@ -238,16 +238,15 @@ rule rrna_mapping:
         read_dir = config["read_dir"],
         contig_dir = config["contig_dir"],
         reference = config["rrna_fasta"]
-    output:
-        cov = "step5_cov/{sample}_rrna_coverage.txt",
+    output:g
         bam = "step5_cov/{sample}_rrna.bam"
     run:
         import subprocess
         if params.read_dir != "none":
             subprocess.Popen("minimap2 -ax sr {} {}/{}_R1.fastq.gz {}/{}_R2.fastq.gz | samtools view -bS - | "
-                             "samtools sort -o {} && samtools depth -aa {} > {}".format(
+                             "samtools sort -o {} && samtools index {}".format(
                 params.reference, params.read_dir, wildcards.sample, params.read_dir,
-                wildcards.sample, output.bam, output.bam, output.cov), shell=True).wait()
+                wildcards.sample, output.bam, output.bam), shell=True).wait()
         else:
             subprocess.Popen("minimap2 -ax asm5 {} {}/{}.fasta | samtools view -bS - | samtools sort -o {} && "
                              "samtools index {}".format(params.reference, params.contig_dir,
