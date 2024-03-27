@@ -51,7 +51,7 @@ headers = ["Sample", "MLST", "abcZ", "adk", "aroE", "fumC", "gdh", "pdhC", "pgm"
            "mtrR NgSTAR", "mtrR comment", "porB NgSTAR", "porB comment", "ponA NgSTAR", "ponA comment",
            "gyrA NgSTAR", "gyrA comment", "parC NgSTAR", "parC comment", "23S NgSTAR", "23S comment", "NgMAST",
            "porB NgMAST", "tbpB", "rplF", "rplF species", "rplf species comment", "rplf_depth", "ppnG coverage", "ppnG depth",
-           "23S_bases_pos{}:a:t:g:c".format(snakemake.params.position1), "23S_bases_pos{}:a:t:g:c".format(snakemake.param.position2)]
+           "23S_bases_pos{}:a:t:g:c".format(snakemake.params.position1), "23S_bases_pos{}:a:t:g:c".format(snakemake.params.position2)]
 
 outstring = snakemake.params.sample
 with open(snakemake.input.mlst) as f:
