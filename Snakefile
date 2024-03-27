@@ -238,7 +238,7 @@ rule rrna_mapping:
         read_dir = config["read_dir"],
         contig_dir = config["contig_dir"],
         reference = config["rrna_fasta"]
-    output:g
+    output:
         bam = "step5_cov/{sample}_rrna.bam"
     run:
         import subprocess
