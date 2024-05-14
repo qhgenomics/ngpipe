@@ -16,7 +16,8 @@ def get_samples(filename):
     with open(filename) as f:
         sample_list = []
         for line in f:
-             sample_list.append(line.rstrip())
+            if line.rstrip() != "":
+                sample_list.append(line.rstrip())
     return sample_list
 
 rule all:
