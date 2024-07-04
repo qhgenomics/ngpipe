@@ -180,8 +180,12 @@ rule ng_typing:
     shell:
         "{params.mlst_dir}/bin/mlst --scheme mlst --threads 32 --quiet {input.scaffolds} > {output.mlst} & "
         "{params.mlst_dir}/bin/mlst --scheme ngmast --threads 32 --quiet {input.scaffolds} > {output.ngmast} & "
-        "{params.mlst_dir}/bin/mlst --scheme ngstar --threads 32 --quiet {input.scaffolds} > {output.ngstar} & "
-        "{params.mlst_dir}/bin/mlst --scheme rplf --threads 32 --quiet {input.scaffolds} > {output.rplf}"
+        "{params.mlst_dir}/bin/mlst --scheme rplf --threads 32 --quiet {input.scaffolds} > {output.rplf} & "
+        "mv {params.mlst_dir}/db/pubmlst/ngmast/porB.tfa {params.mlst_dir}/db/pubmlst/ngmast/porB.tfa.hide && "
+        "{params.mlst_dir}/scripts/mlst-make_blast_db && "
+        "{params.mlst_dir}/bin/mlst --scheme ngstar --threads 32 --quiet {input.scaffolds} > {output.ngstar} && "
+        "mv {params.mlst_dir}/db/pubmlst/ngmast/porB.tfa.hide {params.mlst_dir}/db/pubmlst/ngmast/porB.tfa && "
+        "{params.mlst_dir}/scripts/mlst-make_blast_db"
 
 rule abricate:
     input:
