@@ -1,11 +1,11 @@
 mlst_dir:
-  /path/to/tseemann/mlst
+  /home/mjsull/curr_proj/gono/ngpipe/mlst
 ppng_fasta:
-  /path/to/ngpipe/data/ppng_target.fasta
+  /home/mjsull/curr_proj/gono/ngpipe/data/ppng_target.fasta
 rplf_fasta:
-  /path/to/ngpipe/data/rplf_target.fasta
+  /home/mjsull/curr_proj/gono/ngpipe/data/rplf_target.fasta
 rrna_fasta:
-  /path/to/ngpipe/data/rrna_target.fasta
+  /home/mjsull/curr_proj/gono/ngpipe/data/rrna_target.fasta
 position1:
   2045
 position2:

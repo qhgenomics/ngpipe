@@ -65,6 +65,7 @@ rule compile_output:
 rule update_ngstar:
     params:
         mlst_dir = config["mlst_dir"],
+        update_db = config["update_db"],
         db = "ngstar"
     output:
         log = "ngstar.log"
@@ -74,6 +75,7 @@ rule update_ngstar:
 rule update_ngmast:
     params:
         mlst_dir = config["mlst_dir"],
+        update_db = config["update_db"],
         db = "ngmast"
     output:
         log = "ngmast.log"
@@ -84,6 +86,7 @@ rule update_ngmast:
 rule update_rplf:
     params:
         mlst_dir = config["mlst_dir"],
+        update_db = config["update_db"],
         db = "rplf"
     output:
         log = "rplf.log"
@@ -95,6 +98,7 @@ rule update_rplf:
 rule update_mlst:
     params:
         mlst_dir = config["mlst_dir"],
+        update_db = config["update_db"],
         db = "mlst"
     output:
         log = "mlst.log",

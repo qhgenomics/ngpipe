@@ -1,6 +1,10 @@
 import os
 from urllib.request import urlopen
 import json
+from openpyxl import load_workbook
+import io
+import datetime
+
 
 db = snakemake.params.db
 if db == "ngstar":
@@ -25,14 +29,20 @@ else:
     version = None
 
 
-with urlopen("https://rest.pubmlst.org/db/pubmlst_neisseria_seqdef/schemes/" + scheme) as response:
-    response_content = response.read().decode('utf-8')
-scheme_info = json.loads(response_content)
 
 
-online_version = scheme_info["last_added"]
+if snakemake.params.update_db != "no":
+    with urlopen("https://rest.pubmlst.org/db/pubmlst_neisseria_seqdef/schemes/" + scheme) as response:
+        response_content = response.read().decode('utf-8')
+    scheme_info = json.loads(response_content)
+    online_version = scheme_info["last_added"]
 
-if version != online_version:
+
+
+if snakemake.params.update_db == "no":
+    with open(snakemake.output.log, 'w') as o:
+        o.write("Database update not requested.\n")
+elif version != online_version and db != "ngstar":
     profiles = scheme_info["profiles_csv"]
     response = urlopen(profiles)
     data = response.read()
@@ -51,25 +61,64 @@ if version != online_version:
         loci_local = loci_local.replace("NG-MAST_", "")
         with open(loci_local, 'wb') as o:
             o.write(data)
-        if db == "ngstar":
-            loci_alleles = loci_info["alleles"]
-            loci_alleles += "?return_all=1&include_records=1"
-            response = urlopen(loci_alleles)
-            json_alleles = json.loads(response.read())
-            with open(loci_local + '.comments', 'w') as o:
-                for j in json_alleles["alleles"]:
-                    allele_id = j["allele_id"]
-                    if "comments" in j:
-                        comments = j["comments"]
-                    else:
-                        comments = "None"
-                    o.write("{}\t{}\n".format(allele_id, comments))
 
 
     with open(version_log, 'w') as o:
         o.write(online_version + "\n")
     with open(snakemake.output.log, 'w') as o:
         o.write("Database updated to version uploaded on " + online_version + "\n")
+elif db == "ngstar":
+    locistar = ['penA', 'mtrR', 'porB', 'ponA', 'gyrA', 'parC', '23S']
+    ngstar_loci = 'https://ngstar.canada.ca/alleles/download?lang=en&loci_name='
+    ngstar_profiles = 'https://ngstar.canada.ca/sequence_types/download?lang=en'
+    ngstar_meta = 'https://ngstar.canada.ca/alleles/download_metadata?lang=en&loci_name='
+    # Download allele fasta files
+    for loci in locistar:
+        response = urlopen(ngstar_loci + loci)
+        data = response.read().decode()
+        loci_local = os.path.join(dbdir, loci + '.tfa')
+        with open(loci_local, 'w') as o:
+            if loci == "penA":
+                for line in data.split("\n"):
+                    if line.startswith(">"):
+                        loci = line.split("_")[1]
+                        o.write(">penA_{:.3f}\n".format(float(loci)).replace(".", ""))
+                    else:
+                        o.write("{}\n".format(line))
+            else:
+                o.write(data.replace(".0\n", "\n"))
+        response = urlopen(ngstar_meta + loci)
+        bytes_in = io.BytesIO(response.read())
+        wb = load_workbook(bytes_in)
+        ws = wb.active
+        comment_local = os.path.join(dbdir, loci + '.tfa.comments')
+        with open(comment_local, 'w') as o:
+            for row in ws.iter_rows(values_only=True):
+                o.write("\t".join(map(str, row)) + "\n")
+    response = urlopen(ngstar_profiles)
+    bytes_in = io.BytesIO(response.read())
+    wb = load_workbook(bytes_in)
+    profiles_local = os.path.join(dbdir, db + '.txt')
+    ws = wb.active
+    with open(profiles_local, 'w') as o:
+        for row in ws.iter_rows(values_only=True):
+            if row[0] == "Sequence Type":
+                o.write("ST")
+                for j in row[1:]:
+                    o.write("\t{}".format(j))
+                o.write("\n")
+            else:
+                o.write(str(row[0]))
+                for j in row[1:]:
+                    if "." in str(j):
+                        o.write("\t{:.3f}".format(j).replace(".", ""))
+                    else:
+                        o.write("\t{}".format(j))
+                o.write("\n")
+    with open(snakemake.output.log, 'w') as o:
+        o.write("Using ngstar donwloaded {}\n".format(datetime.datetime.now()))
+                
+
 else:
     with open(snakemake.output.log, 'w') as o:
         o.write("Database already using version uploaded on " + online_version + "\n")
