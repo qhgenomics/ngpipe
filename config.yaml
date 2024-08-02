@@ -1,11 +1,11 @@
 mlst_dir:
-  /home/mjsull/curr_proj/gono/ngpipe/mlst
+  /data/ngono/ngpipe/mlst
 ppng_fasta:
-  /home/mjsull/curr_proj/gono/ngpipe/data/ppng_target.fasta
+  /data/ngono/ngpipe/data/ppng_target.fasta
 rplf_fasta:
-  /home/mjsull/curr_proj/gono/ngpipe/data/rplf_target.fasta
+  /data/ngono/ngpipe/data/rplf_target.fasta
 rrna_fasta:
-  /home/mjsull/curr_proj/gono/ngpipe/data/rrna_target.fasta
+  /data/ngono/ngpipe/data/rrna_target.fasta
 position1:
   2045
 position2:
@@ -14,3 +14,7 @@ read_dir:
   none
 contig_dir:
   none
+previous_runs:
+  none
+strict:
+  true

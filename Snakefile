@@ -115,15 +115,20 @@ rule update_db:
         rplf_log = "rplf.log",
         mlst_log = "mlst.log"
     output:
-        updated_db = "database.log"
+        updated_db = "database.log",
+        mlst_bin = "mlst/bin/mlst",
+        ngstar_mlst_bin = "starmlst/bin/mlst"
     shell:
-        "sed -i \"s|NG-MAST_||g\" {params.mlst_dir}/db/pubmlst/ngmast/* && "
-        "sed -i \"s|'mtrR|mtrR|g\" {params.mlst_dir}/db/pubmlst/ngstar/* && "
-        "sed -i \"s|'rplF|rplF|g\" {params.mlst_dir}/db/pubmlst/rplf/* && "
-        "sed -i \"s|rplF_id|ST|g\" {params.mlst_dir}/db/pubmlst/rplf/rplf.txt &&"
-        "sed -i \"s|genospecies|species|g\" {params.mlst_dir}/db/pubmlst/rplf/rplf.txt &&"
-        "sed -i \"s|comments|CC|g\" {params.mlst_dir}/db/pubmlst/rplf/rplf.txt &&"
-        "{params.mlst_dir}/scripts/mlst-make_blast_db && "
+        "cp -R {params.mlst_dir}/. mlst && "
+        "sed -i \"s|NG-MAST_||g\" mlst/db/pubmlst/ngmast/* && "
+        "sed -i \"s|'rplF|rplF|g\" mlst/db/pubmlst/rplf/* && "
+        "sed -i \"s|rplF_id|ST|g\" mlst/db/pubmlst/rplf/rplf.txt &&"
+        "sed -i \"s|genospecies|species|g\" mlst/db/pubmlst/rplf/rplf.txt &&"
+        "sed -i \"s|comments|CC|g\" mlst/db/pubmlst/rplf/rplf.txt &&"
+        "mlst/scripts/mlst-make_blast_db && "
+        "cp -R {params.mlst_dir}/. starmlst && "
+        "rm starmlst/db/pubmlst/ngmast/porB.tfa && "
+        "starmlst/scripts/mlst-make_blast_db && "
         "cat {input.ngstar_log} {input.ngmast_log} {input.mlst_log} {input.rplf_log} > {output.updated_db}"
 
 rule qc:
@@ -172,9 +177,9 @@ rule assemble_reads:
 rule ng_typing:
     input:
         updated_db = "database.log",
-        scaffolds = "step2_assembly/metaspades_{sample}/scaffolds.fasta"
-    params:
-        mlst_dir = config["mlst_dir"]
+        scaffolds = "step2_assembly/metaspades_{sample}/scaffolds.fasta",
+        mlst = "mlst/bin/mlst",
+        starmlst = "starmlst/bin/mlst"
     output:
         mlst = "step3_typing/{sample}_mlst.tsv",
         ngmast = "step3_typing/{sample}_ngmast.tsv",
@@ -182,14 +187,10 @@ rule ng_typing:
         rplf = "step3_typing/{sample}_rplf.tsv"
     threads: 24
     shell:
-        "{params.mlst_dir}/bin/mlst --scheme mlst --threads 32 --quiet {input.scaffolds} > {output.mlst} & "
-        "{params.mlst_dir}/bin/mlst --scheme ngmast --threads 32 --quiet {input.scaffolds} > {output.ngmast} & "
-        "{params.mlst_dir}/bin/mlst --scheme rplf --threads 32 --quiet {input.scaffolds} > {output.rplf} & "
-        "mv {params.mlst_dir}/db/pubmlst/ngmast/porB.tfa {params.mlst_dir}/db/pubmlst/ngmast/porB.tfa.hide && "
-        "{params.mlst_dir}/scripts/mlst-make_blast_db && "
-        "{params.mlst_dir}/bin/mlst --scheme ngstar --threads 32 --quiet {input.scaffolds} > {output.ngstar} && "
-        "mv {params.mlst_dir}/db/pubmlst/ngmast/porB.tfa.hide {params.mlst_dir}/db/pubmlst/ngmast/porB.tfa && "
-        "{params.mlst_dir}/scripts/mlst-make_blast_db"
+        "{input.mlst} --scheme mlst --threads 32 --quiet {input.scaffolds} > {output.mlst} & "
+        "{input.mlst} --scheme ngmast --threads 32 --quiet {input.scaffolds} > {output.ngmast} & "
+        "{input.mlst} --scheme rplf --threads 32 --quiet {input.scaffolds} > {output.rplf} & "
+        "{input.starmlst} --scheme ngstar --threads 32 --quiet {input.scaffolds} > {output.ngstar}"
 
 rule abricate:
     input:
@@ -358,7 +359,8 @@ rule create_output:
         mlst_dir = config["mlst_dir"],
         sample = "{sample}",
         position1 = config["position1"],
-        position2 = config["position2"]
+        position2 = config["position2"],
+        strict = config["strict"]
     output:
         tsv = "step6_output/{sample}_summary.tsv"
     script:

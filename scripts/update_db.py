@@ -81,8 +81,8 @@ elif db == "ngstar":
             if loci == "penA":
                 for line in data.split("\n"):
                     if line.startswith(">"):
-                        loci = line.split("_")[1]
-                        o.write(">penA_{:.3f}\n".format(float(loci)).replace(".", ""))
+                        pena_loci = line.split("_")[1]
+                        o.write(">penA_{:.3f}\n".format(float(pena_loci)).replace(".", ""))
                     else:
                         o.write("{}\n".format(line))
             else:
@@ -94,7 +94,7 @@ elif db == "ngstar":
         comment_local = os.path.join(dbdir, loci + '.tfa.comments')
         with open(comment_local, 'w') as o:
             for row in ws.iter_rows(values_only=True):
-                o.write("\t".join(map(str, row)) + "\n")
+                o.write("\t".join(map(str, row)).replace("\n", " ") + "\n")
     response = urlopen(ngstar_profiles)
     bytes_in = io.BytesIO(response.read())
     wb = load_workbook(bytes_in)

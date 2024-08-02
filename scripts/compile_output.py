@@ -62,6 +62,8 @@ with open(snakemake.input.mlst) as f:
             new_allele = resolve_mult_allele(i, "mlst")
         else:
             new_allele = i
+        if snakemake.params.strict == "true" and ("?" in new_allele or "~" in new_allele):
+            new_allele = '{}(-)'.format(new_allele.split('(')[0])
         new_profile.append(new_allele)
     if new_profile != [abcZ, adk, aroE, fumC, gdh, pdhC, pgm]:
         penA, mtrR, porB, ponA, gyrA, parC, rna23S = new_profile
@@ -87,6 +89,8 @@ with open(snakemake.input.ngstar) as f:
             new_allele = resolve_mult_allele(i, "ngstar")
         else:
             new_allele = i
+        if snakemake.params.strict and ("?" in new_allele or "~" in new_allele):
+            new_allele = '{}(-)'.format(new_allele.split('(')[0])
         new_profile.append(new_allele)
     if new_profile != [penA, mtrR, porB, ponA, gyrA, parC, rna23S]:
         penA, mtrR, porB, ponA, gyrA, parC, rna23S = new_profile
@@ -94,35 +98,42 @@ with open(snakemake.input.ngstar) as f:
 
 
 
-
 comment_dict = {"penA":{"-":"-"}, "mtrR":{"-":"-"}, "porB":{"-":"-"}, "ponA":{"-":"-"}, "gyrA":{"-":"-"}, "parC":{"-":"-"}, "rna23S":{"-":"-"}}
-with open(os.path.join(snakemake.params.mlst_dir, "db", "pubmlst", "ngstar", "NEIS1753.tfa.comments")) as f:
+with open(os.path.join(snakemake.params.mlst_dir, "db", "pubmlst", "ngstar", "penA.tfa.comments")) as f:
+    f.readline()
     for line in f:
-        allele, comment = line.rstrip().split("\t")
+        allele, comment = line.rstrip().split("\t")[:2]
+        allele = "{:.3f}".format(float(allele)).replace('.', '')
         comment_dict["penA"][allele] = comment
 with open(os.path.join(snakemake.params.mlst_dir, "db", "pubmlst", "ngstar", "mtrR.tfa.comments")) as f:
+    f.readline()
     for line in f:
-        allele, comment = line.rstrip().split("\t")
+        allele, comment = line.rstrip().split("\t")[:2]
         comment_dict["mtrR"][allele] = comment
-with open(os.path.join(snakemake.params.mlst_dir, "db", "pubmlst", "ngstar", "NG_porB.tfa.comments")) as f:
+with open(os.path.join(snakemake.params.mlst_dir, "db", "pubmlst", "ngstar", "porB.tfa.comments")) as f:
+    f.readline()
     for line in f:
-        allele, comment = line.rstrip().split("\t")
+        allele, comment = line.rstrip().split("\t")[:2]
         comment_dict["porB"][allele] = comment
-with open(os.path.join(snakemake.params.mlst_dir, "db", "pubmlst", "ngstar", "NG_ponA.tfa.comments")) as f:
+with open(os.path.join(snakemake.params.mlst_dir, "db", "pubmlst", "ngstar", "ponA.tfa.comments")) as f:
+    f.readline()
     for line in f:
-        allele, comment = line.rstrip().split("\t")
+        allele, comment = line.rstrip().split("\t")[:2]
         comment_dict["ponA"][allele] = comment
-with open(os.path.join(snakemake.params.mlst_dir, "db", "pubmlst", "ngstar", "NG_gyrA.tfa.comments")) as f:
+with open(os.path.join(snakemake.params.mlst_dir, "db", "pubmlst", "ngstar", "gyrA.tfa.comments")) as f:
+    f.readline()
     for line in f:
-        allele, comment = line.rstrip().split("\t")
+        allele, comment = line.rstrip().split("\t")[:2]
         comment_dict["gyrA"][allele] = comment
-with open(os.path.join(snakemake.params.mlst_dir, "db", "pubmlst", "ngstar", "NG_parC.tfa.comments")) as f:
+with open(os.path.join(snakemake.params.mlst_dir, "db", "pubmlst", "ngstar", "parC.tfa.comments")) as f:
+    f.readline()
     for line in f:
-        allele, comment = line.rstrip().split("\t")
+        allele, comment = line.rstrip().split("\t")[:2]
         comment_dict["parC"][allele] = comment
-with open(os.path.join(snakemake.params.mlst_dir, "db", "pubmlst", "ngstar", "NG_23S.tfa.comments")) as f:
+with open(os.path.join(snakemake.params.mlst_dir, "db", "pubmlst", "ngstar", "23S.tfa.comments")) as f:
+    f.readline()
     for line in f:
-        allele, comment = line.rstrip().split("\t")
+        allele, comment = line.rstrip().split("\t")[:2]
         comment_dict["rna23S"][allele] = comment
 
 
@@ -187,6 +198,8 @@ with open(snakemake.input.ngmast) as f:
             new_allele = resolve_mult_allele(i, "ngmast")
         else:
             new_allele = i
+        if snakemake.params.strict == "true" and ("?" in new_allele or "~" in new_allele):
+            new_allele = '{}(-)'.format(new_allele.split('(')[0])
         new_profile.append(new_allele)
     if new_profile != [porB, tbpB]:
         porB, tbpB = new_profile
