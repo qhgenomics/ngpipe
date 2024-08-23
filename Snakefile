@@ -266,8 +266,7 @@ rule rrna_mapping:
 rule rrna_alleles:
     params:
         reference = config["rrna_fasta"],
-        position1 = config["position1"],
-        position2 = config["position2"]
+        positions = config["positions"]
     input:
         bam = "step5_cov/{sample}_rrna.bam"
     output:
@@ -275,33 +274,25 @@ rule rrna_alleles:
     run:
         import pysam
         samfile = pysam.AlignmentFile(input.bam, "rb")
-        freqdict1 = {"a":0, "t":0, "c":0, "g":0}
-        for pileupcolumn in samfile.pileup("23S", params.position1):
-            if pileupcolumn.pos != params.position1:
-                continue
-            for pileupread in pileupcolumn.pileups:
-                if not pileupread.is_del and not pileupread.is_refskip:
-                    try:
-                        base = pileupread.alignment.query_sequence[pileupread.query_position]
-                    except IndexError:
-                        pass
-                freqdict1[base.lower()] += 1
-        freqdict2 = {"a":0, "t":0, "c":0, "g":0}
-        for pileupcolumn in samfile.pileup("23S", params.position2):
-            if pileupcolumn.pos != params.position2:
-                continue
-            for pileupread in pileupcolumn.pileups:
-                if not pileupread.is_del and not pileupread.is_refskip:
-                    try:
-                        base = pileupread.alignment.query_sequence[pileupread.query_position]
-                    except IndexError:
-                        pass
-                freqdict2[base.lower()] += 1
+        freqdicts = []
+        for position in params.positions.split(','):
+            freqdict = {"a":0, "t":0, "c":0, "g":0}
+            for pileupcolumn in samfile.pileup("23S", int(position)):
+                if pileupcolumn.pos != int(position):
+                    continue
+                for pileupread in pileupcolumn.pileups:
+                    if not pileupread.is_del and not pileupread.is_refskip:
+                        try:
+                            base = pileupread.alignment.query_sequence[pileupread.query_position]
+                        except IndexError:
+                            pass
+                    freqdict[base.lower()] += 1
+            freqdicts.append(freqdict)
         with open(output.tsv, 'w') as o:
             o.write("pos\ta\tt\tg\tc\n")
-            o.write("{}\t{}\t{}\t{}\t{}\n".format(params.position1, freqdict1['a'], freqdict1['t'], freqdict1['g'], freqdict1['c']))
-            o.write("{}\t{}\t{}\t{}\t{}\n".format(params.position2, freqdict2['a'], freqdict2['t'], freqdict2['g'], freqdict2['c']))
-
+            for freqdict, position in zip(freqdicts, params.positions.split(',')):
+                o.write("{}\t{}\t{}\t{}\t{}\n".format(position, freqdict['a'], freqdict['t'], freqdict['g'], freqdict['c']))
+          
 
 rule get_rplf_coverage:
     input:
@@ -358,8 +349,7 @@ rule create_output:
     params:
         mlst_dir = config["mlst_dir"],
         sample = "{sample}",
-        position1 = config["position1"],
-        position2 = config["position2"],
+        positions = config["positions"],
         strict = config["strict"]
     output:
         tsv = "step6_output/{sample}_summary.tsv"

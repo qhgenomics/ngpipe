@@ -50,8 +50,9 @@ def update_profile(profile, scheme):
 headers = ["Sample", "MLST", "abcZ", "adk", "aroE", "fumC", "gdh", "pdhC", "pgm", "NgSTAR", "penA NgSTAR", "penA comment",
            "mtrR NgSTAR", "mtrR comment", "porB NgSTAR", "porB comment", "ponA NgSTAR", "ponA comment",
            "gyrA NgSTAR", "gyrA comment", "parC NgSTAR", "parC comment", "23S NgSTAR", "23S comment", "NgMAST",
-           "porB NgMAST", "tbpB", "rplF", "rplF species", "rplf species comment", "rplf_depth", "ppnG coverage", "ppnG depth",
-           "23S_bases_pos{}:a:t:g:c".format(snakemake.params.position1), "23S_bases_pos{}:a:t:g:c".format(snakemake.params.position2)]
+           "porB NgMAST", "tbpB", "rplF", "rplF species", "rplf species comment", "rplf_depth", "ppnG coverage", "ppnG depth"]
+for i in snakemake.params.positions.split(','):
+    headers.append("23S_bases_pos{}:a:t:g:c".format(i))
 
 outstring = snakemake.params.sample
 with open(snakemake.input.mlst) as f:
@@ -62,11 +63,11 @@ with open(snakemake.input.mlst) as f:
             new_allele = resolve_mult_allele(i, "mlst")
         else:
             new_allele = i
-        if snakemake.params.strict == "true" and ("?" in new_allele or "~" in new_allele):
+        if snakemake.params.strict and ("?" in new_allele or "~" in new_allele):
             new_allele = '{}(-)'.format(new_allele.split('(')[0])
         new_profile.append(new_allele)
     if new_profile != [abcZ, adk, aroE, fumC, gdh, pdhC, pgm]:
-        penA, mtrR, porB, ponA, gyrA, parC, rna23S = new_profile
+        abcZ, adk, aroE, fumC, gdh, pdhC, pgm = new_profile
         profile = update_profile(new_profile, "mlst")
 
 
@@ -98,7 +99,7 @@ with open(snakemake.input.ngstar) as f:
 
 
 
-comment_dict = {"penA":{"-":"-"}, "mtrR":{"-":"-"}, "porB":{"-":"-"}, "ponA":{"-":"-"}, "gyrA":{"-":"-"}, "parC":{"-":"-"}, "rna23S":{"-":"-"}}
+comment_dict = {"penA":{"-":"-"}, "mtrR":{"-":"-"}, "porB":{"-":"-"}	, "ponA":{"-":"-"}, "gyrA":{"-":"-"}, "parC":{"-":"-"}, "rna23S":{"-":"-"}}
 with open(os.path.join(snakemake.params.mlst_dir, "db", "pubmlst", "ngstar", "penA.tfa.comments")) as f:
     f.readline()
     for line in f:
@@ -198,7 +199,7 @@ with open(snakemake.input.ngmast) as f:
             new_allele = resolve_mult_allele(i, "ngmast")
         else:
             new_allele = i
-        if snakemake.params.strict == "true" and ("?" in new_allele or "~" in new_allele):
+        if snakemake.params.strict and ("?" in new_allele or "~" in new_allele):
             new_allele = '{}(-)'.format(new_allele.split('(')[0])
         new_profile.append(new_allele)
     if new_profile != [porB, tbpB]:
@@ -245,11 +246,9 @@ outstring += "\t" + cov + "\t" + depth
 
 with open(snakemake.input.rrna_alleles) as f:
     f.readline()
-    pos, a, t, g, c = f.readline().split()
-    outstring += "\t{}:{}:{}:{}".format(a,t,g,c)
-    pos, a, t, g, c = f.readline().split()
-    outstring += "\t{}:{}:{}:{}".format(a,t,g,c)
-
+    for line in f:
+        pos, a, t, g, c = line.split()
+        outstring += "\t{}:{}:{}:{}".format(a,t,g,c)
 
 with open(snakemake.output.tsv, 'w') as o:
     o.write("\t".join(headers) + "\n")

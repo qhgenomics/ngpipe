@@ -87,6 +87,7 @@ elif db == "ngstar":
                         o.write("{}\n".format(line))
             else:
                 o.write(data.replace(".0\n", "\n"))
+                o.write("\n")
         response = urlopen(ngstar_meta + loci)
         bytes_in = io.BytesIO(response.read())
         wb = load_workbook(bytes_in)

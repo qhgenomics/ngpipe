@@ -6,10 +6,8 @@ rplf_fasta:
   /data/ngono/ngpipe/data/rplf_target.fasta
 rrna_fasta:
   /data/ngono/ngpipe/data/rrna_target.fasta
-position1:
-  2045
-position2:
-  2597
+positions:
+  2044,2045,2597
 read_dir:
   none
 contig_dir:
@@ -18,3 +16,5 @@ previous_runs:
   none
 strict:
   true
+update_db:
+  false
