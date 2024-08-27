@@ -331,6 +331,21 @@ rule get_ppng_coverage:
             o.write("Bases: {}\nCoverage: {:.2%}\nDepth: {:.2f}".format(total, total_cov/total, total_depth/total))
 
 
+rule get_target_coverage:
+    input:
+        read_dir = config["read_dir"],
+        mlst_dir = "mlst/bin/mlst",
+        starmlst_dir = "starmlst/bin/mlst",
+        mlst = "step3_typing/{sample}_mlst.tsv",
+        ngmast= "step3_typing/{sample}_ngmast.tsv",
+        ngstar= "step3_typing/{sample}_ngstar.tsv"
+    output:
+        mlst_cov = "step5_cov/{sample}.mlst.cov",
+        ngstar_cov = "step5_cov/{sample}.ngstar.cov",
+        ngmast_cov = "step5_cov/{sample}.ngmast.cov",
+
+    script:
+        "scripts/get_loci_coverage.py"
 
 rule create_output:
     input:
@@ -345,12 +360,15 @@ rule create_output:
         abricate = "step4_abricate/{sample}_abricate.txt",
         ppng_cov = "step5_cov/{sample}_ppng.cov",
         rplf_cov = "step5_cov/{sample}_rplf.cov",
-        rrna_alleles = "step5_cov/{sample}_rrna_alleles.tsv"
+        rrna_alleles = "step5_cov/{sample}_rrna_alleles.tsv",
+        mlst_cov = "step5_cov/{sample}.mlst.cov",
+        ngstar_cov = "step5_cov/{sample}.ngstar.cov",
+        ngmast_cov = "step5_cov/{sample}.ngmast.cov",
     params:
         mlst_dir = config["mlst_dir"],
         sample = "{sample}",
         positions = config["positions"],
-        strict = config["strict"]
+        strictness = config["strictness"]
     output:
         tsv = "step6_output/{sample}_summary.tsv"
     script:

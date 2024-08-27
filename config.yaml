@@ -14,7 +14,7 @@ contig_dir:
   none
 previous_runs:
   none
-strict:
-  true
+strictness:
+  "partial"
 update_db:
   false

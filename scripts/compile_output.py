@@ -29,7 +29,7 @@ def resolve_mult_allele(allele, scheme):
             out_alleles.add(i)
     out_alleles = list(out_alleles)
     out_alleles.sort(key=lambda x: int(x))
-    return(allele.split('(')[0] + '(' + ','.join(out_alleles) + ')')
+    return(allele.split('(')[0] + '(' + ', '.join(out_alleles) + ')')
 
 
 def update_profile(profile, scheme):
@@ -63,7 +63,9 @@ with open(snakemake.input.mlst) as f:
             new_allele = resolve_mult_allele(i, "mlst")
         else:
             new_allele = i
-        if snakemake.params.strict and ("?" in new_allele or "~" in new_allele):
+        if snakemake.params.strictness == "strict" and ("?" in new_allele or "~" in new_allele):
+            new_allele = '{}(-)'.format(new_allele.split('(')[0])
+        elif snakemake.params.strictness == "partial" and "~" in new_allele:
             new_allele = '{}(-)'.format(new_allele.split('(')[0])
         new_profile.append(new_allele)
     if new_profile != [abcZ, adk, aroE, fumC, gdh, pdhC, pgm]:
@@ -90,7 +92,9 @@ with open(snakemake.input.ngstar) as f:
             new_allele = resolve_mult_allele(i, "ngstar")
         else:
             new_allele = i
-        if snakemake.params.strict and ("?" in new_allele or "~" in new_allele):
+        if snakemake.params.strictness == "strict" and ("?" in new_allele or "~" in new_allele):
+            new_allele = '{}(-)'.format(new_allele.split('(')[0])
+        elif snakemake.params.strictness == "partial" and "~" in new_allele:
             new_allele = '{}(-)'.format(new_allele.split('(')[0])
         new_profile.append(new_allele)
     if new_profile != [penA, mtrR, porB, ponA, gyrA, parC, rna23S]:
@@ -199,7 +203,9 @@ with open(snakemake.input.ngmast) as f:
             new_allele = resolve_mult_allele(i, "ngmast")
         else:
             new_allele = i
-        if snakemake.params.strict and ("?" in new_allele or "~" in new_allele):
+        if snakemake.params.strictness == "strict" and ("?" in new_allele or "~" in new_allele):
+            new_allele = '{}(-)'.format(new_allele.split('(')[0])
+        elif snakemake.params.strictness == "partial" and "~" in new_allele:
             new_allele = '{}(-)'.format(new_allele.split('(')[0])
         new_profile.append(new_allele)
     if new_profile != [porB, tbpB]:
@@ -234,7 +240,7 @@ with open(snakemake.input.rplf_cov) as f:
     cov = f.readline().rstrip().split()[1]
     depth = f.readline().rstrip().split()[1]
 
-outstring +=  "\t" + depth
+outstring += "\t" + depth
 
 
 with open(snakemake.input.ppng_cov) as f:
@@ -249,6 +255,69 @@ with open(snakemake.input.rrna_alleles) as f:
     for line in f:
         pos, a, t, g, c = line.split()
         outstring += "\t{}:{}:{}:{}".format(a,t,g,c)
+
+with open(snakemake.input.mlst_cov) as f:
+    total_depth, total_cov, total = 0, 0, 0
+    lastref = None
+    for line in f:
+        ref, pos, cov = line.split()
+        if not lastref is None and ref != lastref:
+            headers.append("{}_cov")
+            header.append("{}_depth")
+            outstring += "\t{:.1%}\t{:.2f}".format(total_cov/total, total_depth/total)
+            total_depth, total_cov, total = 0, 0, 0
+        lastref = ref
+        total += 1
+        total_depth += float(cov)
+        if cov != '0':
+            total_cov += 1
+    headers.append("{}_cov")
+    header.append("{}_depth")
+    outstring += "\t{:.1%}\t{:.2f}".format(total_cov / total, total_depth / total)
+    total_depth, total_cov, total = 0, 0, 0
+
+
+with open(snakemake.input.ngstar_cov) as f:
+    total_depth, total_cov, total = 0, 0, 0
+    lastref = None
+    for line in f:
+        ref, pos, cov = line.split()
+        if not lastref is None and ref != lastref:
+            headers.append("{}_cov")
+            header.append("{}_depth")
+            outstring += "\t{:.1%}\t{:.2f}".format(total_cov/total, total_depth/total)
+            total_depth, total_cov, total = 0, 0, 0
+        lastref = ref
+        total += 1
+        total_depth += float(cov)
+        if cov != '0':
+            total_cov += 1
+    headers.append("{}_cov")
+    header.append("{}_depth")
+    outstring += "\t{:.1%}\t{:.2f}".format(total_cov / total, total_depth / total)
+    total_depth, total_cov, total = 0, 0, 0
+
+with open(snakemake.input.ngmast_cov) as f:
+    total_depth, total_cov, total = 0, 0, 0
+    lastref = None
+    for line in f:
+        ref, pos, cov = line.split()
+        if not lastref is None and ref != lastref:
+            headers.append("{}_cov")
+            header.append("{}_depth")
+            outstring += "\t{:.1%}\t{:.2f}".format(total_cov/total, total_depth/total)
+            total_depth, total_cov, total = 0, 0, 0
+        lastref = ref
+        total += 1
+        total_depth += float(cov)
+        if cov != '0':
+            total_cov += 1
+    headers.append("{}_cov")
+    header.append("{}_depth")
+    outstring += "\t{:.1%}\t{:.2f}".format(total_cov / total, total_depth / total)
+    total_depth, total_cov, total = 0, 0, 0
+
+
 
 with open(snakemake.output.tsv, 'w') as o:
     o.write("\t".join(headers) + "\n")

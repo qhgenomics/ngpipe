@@ -1,0 +1,41 @@
+import subprocess
+import os
+
+
+
+def create_coverage_files(input_file, scheme, mlst_dir, outfile):
+    with (open(input_file) as f, open("data/step5_cov/{}.{}.fasta".format(snakemake.wildcards.sample, scheme), "w") as o):
+        splitline = f.readline().rstrip().split("\t")
+        contig, scheme, profile = splitline[:3]
+        alleles = splitline[3:]
+        for i in alleles:
+            gene = i.split('(')[0]
+            alelle = i.split('(')[1].split(')')[0]
+            if ',' in allele:
+                allele = allele.split(',')[0]
+            allele.replace("?", "").replace("~", "")
+            with open(os.path.join(mlst_dir, "{}.tfa".format(gene))) as f:
+                for line in f:
+                    if line.rstrip() == ">{}_{}".format(gene, allele) or allele == '-':
+                        o.write(line)
+                        getseq = True
+                    elif line.startswith(">"):
+                        if getseq:
+                            break
+                    elif getseq:
+                        o.write(line)
+    if params.read_dir != "none":
+        subprocess.Popen("minimap2 -ax sr data/step5_cov/{sample}.{scheme}.fasta {read_dir}/{sample}_R1.fastq.gz {readir}/{sample}_R2.fastq.gz"
+                         " | samtools view -bS - | samtools sort -o data/step5_cov/{sample}.{scheme}.bam && "
+                         " samtools depth -aa data/step5_cov/{sample}.{scheme}.bam > {coverage}".format(
+            sample=snakemake.wildcards.sample, scheme=scheme, read_dir=snakemake.params.read_dir, cov=outfile), shell=True).wait()
+    else:
+        subprocess.Popen("minimap2 -ax asm5 data/step5_cov/{sample}.{scheme}.fasta {contig_dir}/{sample}.fasta"
+                         " | samtools view -bS - | samtools sort -o data/step5_cov/{sample}.{scheme}.bam && "
+                         " samtools depth -aa data/step5_cov/{sample}.{scheme}.bam > {coverage}".format(
+            sample=snakemake.wildcards.sample, scheme=scheme, read_dir=snakemake.params.read_dir, cov=outfile), shell=True).wait()
+
+create_coverage_files(snakemake.input.mlst, "mlst", snakemake.input.mlst_dir, snakemake.output.mlst_cov )
+create_coverage_files(snakemake.input.mlst, "ngstar", snakemake.input.starmlst_dir, snakemake.output.ngstar_cov)
+create_coverage_files(snakemake.input.mlst, "ngmast", snakemake.input.mlst_dir, snakemake.output.ngmast_cov)
+
