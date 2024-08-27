@@ -63,7 +63,7 @@ mlst_colors = {}
 add_profiles(snakemake.input.summary, True)
 
 
-for summary in glob.glob(os.path.join(snakemake.params.previous_run, "*.tsv")):
+for summary in glob.glob(os.path.join(snakemake.params.previous_runs, "*.tsv")):
     add_profiles(summary, dist_dict, label_dict, size_dict, color_dict)
 
 
