@@ -26,7 +26,7 @@ def create_coverage_files(input_file, scheme, mlst_dir, outfile):
                     elif getseq:
                         o.write(line)
     if snakemake.params.read_dir != "none":
-        subprocess.Popen("minimap2 -ax sr step5_cov/{sample}.{scheme}.fasta {read_dir}/{sample}_R1.fastq.gz {readir}/{sample}_R2.fastq.gz"
+        subprocess.Popen("minimap2 -ax sr step5_cov/{sample}.{scheme}.fasta {read_dir}/{sample}_R1.fastq.gz {read_dir}/{sample}_R2.fastq.gz"
                          " | samtools view -bS - | samtools sort -o step5_cov/{sample}.{scheme}.bam && "
                          " samtools depth -aa step5_cov/{sample}.{scheme}.bam > {coverage}".format(
             sample=snakemake.wildcards.sample, scheme=scheme, read_dir=snakemake.params.read_dir, cov=outfile), shell=True).wait()
@@ -34,7 +34,7 @@ def create_coverage_files(input_file, scheme, mlst_dir, outfile):
         subprocess.Popen("minimap2 -ax asm5 step5_cov/{sample}.{scheme}.fasta {contig_dir}/{sample}.fasta"
                          " | samtools view -bS - | samtools sort -o step5_cov/{sample}.{scheme}.bam && "
                          " samtools depth -aa step5_cov/{sample}.{scheme}.bam > {coverage}".format(
-            sample=snakemake.wildcards.sample, scheme=scheme, read_dir=snakemake.params.read_dir, cov=outfile), shell=True).wait()
+            sample=snakemake.wildcards.sample, scheme=scheme, contig_dir=snakemake.params.contig_dir, cov=outfile), shell=True).wait()
 
 create_coverage_files(snakemake.input.mlst, "mlst", snakemake.input.mlst_dir, snakemake.output.mlst_cov )
 create_coverage_files(snakemake.input.mlst, "ngstar", snakemake.input.starmlst_dir, snakemake.output.ngstar_cov)

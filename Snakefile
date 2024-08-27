@@ -339,7 +339,8 @@ rule get_target_coverage:
         ngmast= "step3_typing/{sample}_ngmast.tsv",
         ngstar= "step3_typing/{sample}_ngstar.tsv"
     params:
-        read_dir = config["read_dir"]
+        read_dir = config["read_dir"],
+        contig_dir= config["contig_dir"]
     output:
         mlst_cov = "step5_cov/{sample}.mlst.cov",
         ngstar_cov = "step5_cov/{sample}.ngstar.cov",
