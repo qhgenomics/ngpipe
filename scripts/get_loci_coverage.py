@@ -14,7 +14,7 @@ def create_coverage_files(input_file, scheme, mlst_dir, outfile):
             if ',' in allele:
                 allele = allele.split(',')[0]
             allele.replace("?", "").replace("~", "")
-            with open(os.path.join(mlst_dir, "{}.tfa".format(gene))) as f:
+            with open("{}/db/pubmlst/{}/{}.tfa".format(mlst_dir.replace("bin/mlst", ""), scheme, gene)) as f:
                 for line in f:
                     if line.rstrip() == ">{}_{}".format(gene, allele) or allele == '-':
                         o.write(line)
