@@ -333,12 +333,13 @@ rule get_ppng_coverage:
 
 rule get_target_coverage:
     input:
-        read_dir = config["read_dir"],
         mlst_dir = "mlst/bin/mlst",
         starmlst_dir = "starmlst/bin/mlst",
         mlst = "step3_typing/{sample}_mlst.tsv",
         ngmast= "step3_typing/{sample}_ngmast.tsv",
         ngstar= "step3_typing/{sample}_ngstar.tsv"
+    params:
+        read_dir = config["read_dir"]
     output:
         mlst_cov = "step5_cov/{sample}.mlst.cov",
         ngstar_cov = "step5_cov/{sample}.ngstar.cov",
