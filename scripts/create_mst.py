@@ -37,7 +37,7 @@ def add_profiles(profile_file, add_names=False):
             if add_names:
                 label_dict[profile] += "\n{}".format(name)
             if not profile in dist_dict:
-                dist_dict[mlstname_label] = {}
+                dist_dict[profile] = {}
                 for i in dist_dict:
                     if i != profile:
                         dist = 0
