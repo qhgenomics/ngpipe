@@ -5,19 +5,11 @@ from matplotlib import pyplot as plt
 
 
 
-max_branch = 500
 
-G = nx.Graph()
 
-merged = {}
 
-colorlist = [(240, 163, 255), (0, 117, 220), (153, 63, 0), (76, 0, 92), (25, 25, 25), (0, 92, 49), (43, 206, 72),
-              (255, 204, 153), (128, 128, 128), (148, 255, 181), (143, 124, 0), (157, 204, 0), (194, 0, 136), (0, 51, 128),
-              (255, 164, 5), (255, 168, 187), (66, 102, 0), (255, 0, 16), (94, 241, 242), (0, 153, 143), (224, 255, 102),
-              (116, 10, 255), (153, 0, 0), (255, 255, 128), (255, 255, 0), (255, 80, 5), (0, 0, 0), (50, 50, 50)]
-cl_index = 0
-mlst_colors = {}
-def add_profiles(profile_file, dist_dict, label_dict, size_dict, color_dict, add_names=False):
+
+def add_profiles(profile_file, add_names=False):
     with open(profile_file) as f:
         header = f.readline()
         for line in f:
@@ -53,18 +45,28 @@ def add_profiles(profile_file, dist_dict, label_dict, size_dict, color_dict, add
                                 dist += 1
                         dist_dict[profile][i] = dist
 
+
+colorlist = [(240, 163, 255), (0, 117, 220), (153, 63, 0), (76, 0, 92), (25, 25, 25), (0, 92, 49), (43, 206, 72),
+              (255, 204, 153), (128, 128, 128), (148, 255, 181), (143, 124, 0), (157, 204, 0), (194, 0, 136), (0, 51, 128),
+              (255, 164, 5), (255, 168, 187), (66, 102, 0), (255, 0, 16), (94, 241, 242), (0, 153, 143), (224, 255, 102),
+              (116, 10, 255), (153, 0, 0), (255, 255, 128), (255, 255, 0), (255, 80, 5), (0, 0, 0), (50, 50, 50)]
+
 dist_dict = {}
 label_dict = {}
 size_dict = {}
 color_dict = {}
+cl_index = 0
+mlst_colors = {}
 
-add_profiles(snakemake.input.summary, dist_dict, label_dict, size_dict, color_dict, True)
+add_profiles(snakemake.input.summary, True)
 
 
 for summary in glob.glob(os.path.join(snakemake.params.previous_run, "*.tsv")):
     add_profiles(summary, dist_dict, label_dict, size_dict, color_dict)
 
 
+max_branch = 500
+G = nx.Graph()
 
 for i in dist_dict:
     for j in dist_dict[i]:
