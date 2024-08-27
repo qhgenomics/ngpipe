@@ -60,6 +60,7 @@ cl_index = 0
 mlst_colors = {}
 
 
+
 add_profiles(snakemake.input.summary, True)
 
 
@@ -67,14 +68,14 @@ for summary in glob.glob(os.path.join(snakemake.params.previous_runs, "*.tsv")):
     add_profiles(summary)
 
 
+
+
 max_branch = 500
 G = nx.Graph()
 
 for i in dist_dict:
     for j in dist_dict[i]:
-        name = label_dict[i]
-        hname = label_dict[j]
-        G.add_edge(name, hname, weight=int(dist_dict[i][j]), length=(50 + dist_dict[i][j]))
+        G.add_edge(i, j, weight=int(dist_dict[i][j]), length=(50 + dist_dict[i][j]))
 
 
 
@@ -85,8 +86,8 @@ T = nx.minimum_spanning_tree(G, weight="weight")
 
 sizes = []
 for n in list(T.nodes):
-    sizes.append(20 * size_dict[n.name])
-    colors.append(color_dict[n.name])
+    sizes.append(20 * size_dict[n])
+    colors.append(color_dict[n])
 
 pos = nx.kamada_kawai_layout(T, weight="length")  # positions for all nodes - seed for reproducibility
 
@@ -106,7 +107,7 @@ nx.draw_networkx_edges(
 )
 
 # node labels
-nx.draw_networkx_labels(T, pos, font_size=node_label_size)
+nx.draw_networkx_labels(T, pos, label_dict, font_size=node_label_size)
 # edge weight labels
 edge_labels = nx.get_edge_attributes(T, "weight")
 nx.draw_networkx_edge_labels(T, pos, edge_labels, font_size=edge_label_size)
