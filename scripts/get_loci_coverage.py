@@ -13,7 +13,7 @@ def create_coverage_files(input_file, scheme, mlst_dir, outfile):
             allele = i.split('(')[1].split(')')[0]
             if ',' in allele:
                 allele = allele.split(',')[0]
-            allele.replace("?", "").replace("~", "")
+            allele = allele.replace("?", "").replace("~", "")
             getseq = False
             with open("{}/db/pubmlst/{}/{}.tfa".format(mlst_dir.replace("bin/mlst", ""), scheme, gene)) as f:
                 for line in f:
@@ -41,6 +41,5 @@ def create_coverage_files(input_file, scheme, mlst_dir, outfile):
             sample=snakemake.wildcards.sample, scheme=scheme, contig_dir=snakemake.params.contig_dir, cov=outfile), shell=True).wait()
 
 create_coverage_files(snakemake.input.mlst, "mlst", snakemake.input.mlst_dir, snakemake.output.mlst_cov )
-create_coverage_files(snakemake.input.mlst, "ngstar", snakemake.input.starmlst_dir, snakemake.output.ngstar_cov)
-create_coverage_files(snakemake.input.mlst, "ngmast", snakemake.input.mlst_dir, snakemake.output.ngmast_cov)
-
+create_coverage_files(snakemake.input.ngstar, "ngstar", snakemake.input.starmlst_dir, snakemake.output.ngstar_cov)
+create_coverage_files(snakemake.input.ngmast, "ngmast", snakemake.input.mlst_dir, snakemake.output.ngmast_cov)
