@@ -7,7 +7,8 @@ import glob
 
 
 
-
+def colorstr(rgb):
+    return "#%02x%02x%02x" % (rgb[0],rgb[1],rgb[2])
 
 def add_profiles(profile_file, add_names=False):
     global cl_index
@@ -22,7 +23,7 @@ def add_profiles(profile_file, add_names=False):
                 size_dict[profile] = 0
             if not profile in color_dict:
                 if not mlst in mlst_colors:
-                    mlst_colors[mlst] = colorlist[cl_index%len(colorlist)]
+                    mlst_colors[mlst] = colorstr(colorlist[cl_index%len(colorlist)])
                     cl_index += 1
                 color_dict[profile] = mlst_colors[mlst]
             size_dict[profile] += 1
