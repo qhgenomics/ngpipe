@@ -15,7 +15,7 @@ colorlist = [(240, 163, 255), (0, 117, 220), (153, 63, 0), (76, 0, 92), (25, 25,
               (255, 204, 153), (128, 128, 128), (148, 255, 181), (143, 124, 0), (157, 204, 0), (194, 0, 136), (0, 51, 128),
               (255, 164, 5), (255, 168, 187), (66, 102, 0), (255, 0, 16), (94, 241, 242), (0, 153, 143), (224, 255, 102),
               (116, 10, 255), (153, 0, 0), (255, 255, 128), (255, 255, 0), (255, 80, 5), (0, 0, 0), (50, 50, 50)]
-
+cl_index = 0
 mlst_colors = {}
 def add_profiles(profile_file, dist_dict, label_dict, size_dict, color_dict, add_names=False):
     with open(profile_file) as f:
@@ -30,6 +30,7 @@ def add_profiles(profile_file, dist_dict, label_dict, size_dict, color_dict, add
             if not profile in color_dict:
                 if not mlst in mlst_colors:
                     mlst_colors[mlst] = colorlist[cl_index%len(colorlist)]
+                    cl_index += 1
                 color_dict[profile] = mlst_colors[mlst]
             size_dict[profile] += 1
             if mlst == '-':
