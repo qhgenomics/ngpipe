@@ -10,7 +10,7 @@ def create_coverage_files(input_file, scheme, mlst_dir, outfile):
         alleles = splitline[3:]
         for i in alleles:
             gene = i.split('(')[0]
-            alelle = i.split('(')[1].split(')')[0]
+            allele = i.split('(')[1].split(')')[0]
             if ',' in allele:
                 allele = allele.split(',')[0]
             allele.replace("?", "").replace("~", "")
