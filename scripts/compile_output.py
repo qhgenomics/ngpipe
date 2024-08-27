@@ -263,7 +263,7 @@ with open(snakemake.input.mlst_cov) as f:
         ref, pos, cov = line.split()
         if not lastref is None and ref != lastref:
             headers.append("{}_cov")
-            header.append("{}_depth")
+            headers.append("{}_depth")
             outstring += "\t{:.1%}\t{:.2f}".format(total_cov/total, total_depth/total)
             total_depth, total_cov, total = 0, 0, 0
         lastref = ref
@@ -272,7 +272,7 @@ with open(snakemake.input.mlst_cov) as f:
         if cov != '0':
             total_cov += 1
     headers.append("{}_cov")
-    header.append("{}_depth")
+    headers.append("{}_depth")
     outstring += "\t{:.1%}\t{:.2f}".format(total_cov / total, total_depth / total)
     total_depth, total_cov, total = 0, 0, 0
 
@@ -284,7 +284,7 @@ with open(snakemake.input.ngstar_cov) as f:
         ref, pos, cov = line.split()
         if not lastref is None and ref != lastref:
             headers.append("{}_cov")
-            header.append("{}_depth")
+            headers.append("{}_depth")
             outstring += "\t{:.1%}\t{:.2f}".format(total_cov/total, total_depth/total)
             total_depth, total_cov, total = 0, 0, 0
         lastref = ref
@@ -293,7 +293,7 @@ with open(snakemake.input.ngstar_cov) as f:
         if cov != '0':
             total_cov += 1
     headers.append("{}_cov")
-    header.append("{}_depth")
+    headers.append("{}_depth")
     outstring += "\t{:.1%}\t{:.2f}".format(total_cov / total, total_depth / total)
     total_depth, total_cov, total = 0, 0, 0
 
@@ -304,7 +304,7 @@ with open(snakemake.input.ngmast_cov) as f:
         ref, pos, cov = line.split()
         if not lastref is None and ref != lastref:
             headers.append("{}_cov")
-            header.append("{}_depth")
+            headers.append("{}_depth")
             outstring += "\t{:.1%}\t{:.2f}".format(total_cov/total, total_depth/total)
             total_depth, total_cov, total = 0, 0, 0
         lastref = ref
@@ -313,7 +313,7 @@ with open(snakemake.input.ngmast_cov) as f:
         if cov != '0':
             total_cov += 1
     headers.append("{}_cov")
-    header.append("{}_depth")
+    headers.append("{}_depth")
     outstring += "\t{:.1%}\t{:.2f}".format(total_cov / total, total_depth / total)
     total_depth, total_cov, total = 0, 0, 0
 
