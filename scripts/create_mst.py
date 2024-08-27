@@ -10,6 +10,7 @@ from matplotlib import pyplot as plt
 
 
 def add_profiles(profile_file, add_names=False):
+    global cl_index
     with open(profile_file) as f:
         header = f.readline()
         for line in f:
@@ -57,6 +58,7 @@ size_dict = {}
 color_dict = {}
 cl_index = 0
 mlst_colors = {}
+
 
 add_profiles(snakemake.input.summary, True)
 
