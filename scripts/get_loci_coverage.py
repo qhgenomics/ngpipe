@@ -17,12 +17,16 @@ def create_coverage_files(input_file, scheme, mlst_dir, outfile):
             getseq = False
             with open("{}/db/pubmlst/{}/{}.tfa".format(mlst_dir.replace("bin/mlst", ""), scheme, gene)) as f:
                 for line in f:
-                    if line.rstrip() == ">{}_{}".format(gene, allele) or (line.startswith(">") and allele == '-'):
-                        o.write(line)
-                        getseq = True
-                    elif line.startswith(">"):
+                    if line.startswith(">"):
                         if getseq:
+                            getseq = False
                             break
+                        elif allele == '-':
+                            o.write(line)
+                            getseq = True
+                        elif line.rstrip() == ">{}_{}".format(gene, allele):
+                            o.write(line)
+                            getseq = True
                     elif getseq:
                         o.write(line)
     if snakemake.params.read_dir != "none":
