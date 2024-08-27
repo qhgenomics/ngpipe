@@ -25,7 +25,7 @@ def create_coverage_files(input_file, scheme, mlst_dir, outfile):
                             break
                     elif getseq:
                         o.write(line)
-    if params.read_dir != "none":
+    if snakemake.params.read_dir != "none":
         subprocess.Popen("minimap2 -ax sr step5_cov/{sample}.{scheme}.fasta {read_dir}/{sample}_R1.fastq.gz {readir}/{sample}_R2.fastq.gz"
                          " | samtools view -bS - | samtools sort -o step5_cov/{sample}.{scheme}.bam && "
                          " samtools depth -aa step5_cov/{sample}.{scheme}.bam > {coverage}".format(
