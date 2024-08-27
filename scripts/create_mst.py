@@ -22,7 +22,7 @@ def add_profiles(profile_file, dist_dict, label_dict, size_dict, color_dict, add
         header = f.readline()
         for line in f:
             name, mlst, a1, a2, a3, a4, a5, a6, a7, ngstar, b1, b1c, b2, b2c, b3, b3c, b4, b4c, b5, b5c, b6, b6c, b7, b7c, \
-                ngmast, c1, c2 = line.split("\t")[:9]
+                ngmast, c1, c2 = line.split("\t")[:27]
             profile = (a1, a2, a3, a4, a5, a6, a7, b1, b2, b3, b4, b5, b6, b7, c1, c2)
             missing = profile.count('-')
             if not profile in size_dict:
