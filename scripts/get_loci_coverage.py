@@ -14,9 +14,10 @@ def create_coverage_files(input_file, scheme, mlst_dir, outfile):
             if ',' in allele:
                 allele = allele.split(',')[0]
             allele.replace("?", "").replace("~", "")
+            getseq = False
             with open("{}/db/pubmlst/{}/{}.tfa".format(mlst_dir.replace("bin/mlst", ""), scheme, gene)) as f:
                 for line in f:
-                    if line.rstrip() == ">{}_{}".format(gene, allele) or allele == '-':
+                    if line.rstrip() == ">{}_{}".format(gene, allele) or (line.startswith(">") and allele == '-'):
                         o.write(line)
                         getseq = True
                     elif line.startswith(">"):
