@@ -34,7 +34,7 @@ def add_profiles(profile_file, dist_dict, label_dict, size_dict, color_dict, add
             size_dict[profile] += 1
             if mlst == '-':
                 mlst = "unknown"
-            if ngstar == '-'
+            if ngstar == '-':
                 ngstar = "unknown"
             if ngmast == '-':
                 ngmast = "unknown"
