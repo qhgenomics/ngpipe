@@ -33,7 +33,8 @@ rule create_mst:
     output:
         mst = "mst.svg"
     params:
-        previous_runs = config["previous_runs"]
+        previous_runs = config["previous_runs"],
+        max_missing = config["max_missing_mst"]
     script:
         "scripts/create_mst.py"
 

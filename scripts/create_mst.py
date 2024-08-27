@@ -19,6 +19,8 @@ def add_profiles(profile_file, add_names=False):
                 ngmast, c1, c2 = line.split("\t")[:27]
             profile = (a1, a2, a3, a4, a5, a6, a7, b1, b2, b3, b4, b5, b6, b7, c1, c2)
             missing = profile.count('-')
+            if missing > snakemake.params.max_missing:
+                continue
             if not profile in size_dict:
                 size_dict[profile] = 0
             if not profile in color_dict:

@@ -18,3 +18,5 @@ strictness:
   "partial"
 update_db:
   false
+max_missing_mst:
+  5
