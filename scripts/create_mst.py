@@ -85,6 +85,7 @@ T = nx.minimum_spanning_tree(G, weight="weight")
 
 
 sizes = []
+colors = []
 for n in list(T.nodes):
     sizes.append(20 * size_dict[n])
     colors.append(color_dict[n])
