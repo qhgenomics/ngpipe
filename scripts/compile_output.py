@@ -222,7 +222,11 @@ outstring += "\t" + tbpB.split('(')[1].split(')')[0]
 rplf_dict = {}
 with open(os.path.join(snakemake.params.mlst_dir, "db", "pubmlst", "rplf", "rplf.txt")) as f:
     for line in f:
-        profile, rplf, species, comment = line.rstrip().split("\t")
+        try:
+            profile, rplf, species, comment = line.rstrip().split("\t")
+        except ValueError:
+            profile, rplf, species = line.rstrip().split("\t")
+            comment = ""
         rplf_dict[profile] = [profile, species, comment]
 
 
