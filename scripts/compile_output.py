@@ -29,7 +29,7 @@ def resolve_mult_allele(allele, scheme):
             out_alleles.add(i)
     out_alleles = list(out_alleles)
     out_alleles.sort(key=lambda x: int(x))
-    return(allele.split('(')[0] + '(' + ', '.join(out_alleles) + ')')
+    return(allele.split('(')[0] + '(' + ','.join(out_alleles) + ')')
 
 
 def update_profile(profile, scheme):
@@ -88,14 +88,17 @@ with open(snakemake.input.ngstar) as f:
     contig, scheme, profile, penA, mtrR, porB, ponA, gyrA, parC, rna23S = f.readline().rstrip().split("\t")
     new_profile = []
     for i in [penA, mtrR, porB, ponA, gyrA, parC, rna23S]:
+        print(i)
         if ',' in i:
             new_allele = resolve_mult_allele(i, "ngstar")
         else:
             new_allele = i
+        print(new_allele)
         if snakemake.params.strictness == "strict" and ("?" in new_allele or "~" in new_allele):
             new_allele = '{}(-)'.format(new_allele.split('(')[0])
         elif snakemake.params.strictness == "partial" and "~" in new_allele:
             new_allele = '{}(-)'.format(new_allele.split('(')[0])
+        print(new_allele)
         new_profile.append(new_allele)
     if new_profile != [penA, mtrR, porB, ponA, gyrA, parC, rna23S]:
         penA, mtrR, porB, ponA, gyrA, parC, rna23S = new_profile

@@ -80,7 +80,8 @@ for i in dist_dict:
     for j in dist_dict[i]:
         G.add_edge(i, j, weight=int(dist_dict[i][j]), length=(50 + dist_dict[i][j]))
 
-
+if len (dist_dict) == 1:
+     G.add_node(list(dist_dict)[0])
 
 
 
