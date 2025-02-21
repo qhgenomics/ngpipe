@@ -117,35 +117,56 @@ rule update_db:
         mlst_log = "mlst.log"
     output:
         updated_db = "database.log",
-        mlst_bin = "mlst/bin/mlst",
-        ngstar_mlst_bin = "starmlst/bin/mlst"
-    shell:
-        "cp -R {params.mlst_dir}/. mlst && "
-        "sed -i \"s|NG-MAST_||g\" mlst/db/pubmlst/ngmast/* && "
-        "sed -i \"s|'rplF|rplF|g\" mlst/db/pubmlst/rplf/* && "
-        "sed -i \"s|rplF_id|ST|g\" mlst/db/pubmlst/rplf/rplf.txt &&"
-        "sed -i \"s|genospecies|species|g\" mlst/db/pubmlst/rplf/rplf.txt &&"
-        "sed -i \"s|comments|CC|g\" mlst/db/pubmlst/rplf/rplf.txt &&"
-        "mlst/scripts/mlst-make_blast_db && "
-        "cp -R {params.mlst_dir}/. starmlst && "
-        "rm starmlst/db/pubmlst/ngmast/porB.tfa && "
-        "starmlst/scripts/mlst-make_blast_db && "
-        "cat {input.ngstar_log} {input.ngmast_log} {input.mlst_log} {input.rplf_log} > {output.updated_db}"
+    run:
+        with open(output.updated_db, 'w') as o:
+            o.write("ngstar: ")
+            with open(input.ngstar_log) as f:
+                o.write(f.readline())
+            o.write("ngmast: ")
+            with open(input.ngmast_log) as f:
+                o.write(f.readline())
+            o.write("rplf: ")
+            with open(input.rplf_log) as f:
+                o.write(f.readline())
+            o.write("mlst: ")
+            with open(input.mlst_log) as f:
+                o.write(f.readline())
+        shell("claMLST create --force {params.mlst_dir}/pymlst_ngstar {params.mlst_dir}/ngstar/ngstar.txt {params.mlst_dir}/ngstar/23S.tfa "
+              "{params.mlst_dir}/ngstar/gyrA.tfa {params.mlst_dir}/ngstar/mtrR.tfa {params.mlst_dir}/ngstar/parC.tfa "
+              "{params.mlst_dir}/ngstar/penA.tfa {params.mlst_dir}/ngstar/ponA.tfa {params.mlst_dir}/ngstar/porB.tfa ")
+        shell("claMLST create --force {params.mlst_dir}/pymlst_ngmast {params.mlst_dir}/ngmast/ngmast.txt "
+              "{params.mlst_dir}/ngmast/porB.tfa {params.mlst_dir}/ngmast/tbpB.tfa")
+        shell("claMLST create --force {params.mlst_dir}/pymlst_rplf {params.mlst_dir}/rplf/rplf.txt {params.mlst_dir}/rplf/rplF.tfa")
+        shell("claMLST create --force {params.mlst_dir}/pymlst_mlst {params.mlst_dir}/mlst/mlst.txt {params.mlst_idr}/mlst/abcZ.tfa "
+              "{params.mlst_dir}/mlst/adk.tfa {params.mlst_dir}/mlst/aroE.tfa {params.mlst_dir}/mlst/fumC.tfa "
+              "{params.mlst_dir}/mlst/gdh.tfa {params.mlst_dir}/mlst/pdhC.tfa {params.mlst_dir}/mlst/pgm.tfa ")
+
+
 
 rule qc:
     params:
-        read_dir = config["read_dir"]
+        read_dir = config["read_dir"],
+        quast_fasta = config["quast_ref_fasta"],
+        quast_gff = config["quast_ref_gff"]
+    input:
+        scaffolds = "step2_assembly/metaspades_{sample}/scaffolds.fasta"
     output:
         qc1 = "step1_fastqc/{sample}_R1_fastqc.html",
-        qc2 = "step1_fastqc/{sample}_R2_fastqc.html"
+        qc2 = "step1_fastqc/{sample}_R2_fastqc.html",
+        quast = "step1_fastqc/{sample}_quast/report.txt"
     threads: 24
     run:
         import subprocess
+        read1 = "{}/{}_R1.fastq.gz".format(params.read_dir, wildcards.sample)
+        read2 = "{}/{}_R2.fastq.gz".format(params.read_dir, wildcards.sample)
         if params.read_dir != "none":
-            subprocess.Popen("fastqc {}/{}_R1.fastq.gz {}/{}_R2.fastq.gz -o step1_fastqc -t {}".format(
-                params.read_dir, wildcards.sample, params.read_dir, wildcards.sample,threads), shell=True).wait()
+            subprocess.Popen("fastqc {} {} -o step1_qc -t {}".format(read1, read2, threads), shell=True).wait()
+            subprocess.Popen("quast.py {} -r {} -g {} -o step1_fastqc/{}_quast/ -1 {} -2 {} --threads {}".format(
+                input.scaffolds, params.quast_fasta, params.quast_gff, wildcards.sample, read1, read2, threads), shell=True).wait()
         else:
             subprocess.Popen("mkdir -p step1_fastqc && touch {} && touch {}".format(output.qc1, output.qc2), shell=True).wait()
+            subprocess.Popen("quast.py {} -r {} -g {} -o step1_fastqc/{}_quast/ --threads {}".format(
+                input.scaffolds, params.quast_fasta, params.quast_gff, wildcards.sample, threads), shell=True).wait()
 
 rule assemble_reads:
     params:
@@ -179,8 +200,8 @@ rule ng_typing:
     input:
         updated_db = "database.log",
         scaffolds = "step2_assembly/metaspades_{sample}/scaffolds.fasta",
-        mlst = "mlst/bin/mlst",
-        starmlst = "starmlst/bin/mlst"
+    param:
+        mlst_dir = config["mlst_dir"]
     output:
         mlst = "step3_typing/{sample}_mlst.tsv",
         ngmast = "step3_typing/{sample}_ngmast.tsv",
@@ -188,10 +209,10 @@ rule ng_typing:
         rplf = "step3_typing/{sample}_rplf.tsv"
     threads: 24
     shell:
-        "{input.mlst} --scheme mlst --threads 32 --quiet {input.scaffolds} > {output.mlst} & "
-        "{input.mlst} --scheme ngmast --threads 32 --quiet {input.scaffolds} > {output.ngmast} & "
-        "{input.mlst} --scheme rplf --threads 32 --quiet {input.scaffolds} > {output.rplf} & "
-        "{input.starmlst} --scheme ngstar --threads 32 --quiet {input.scaffolds} > {output.ngstar}"
+        "claMLST -o {output.mlst} {params.mlst_dir}/mlst {input.scaffolds} && "
+        "claMLST -o {output.ngmast} {params.mlst_dir}/ngmast {input.scaffolds} && "
+        "claMLST -o {output.rplf} {params.mlst_dir}/rplf {input.scaffolds} && "
+        "claMLST -o {output.ngstar} {params.mlst_dir}/ngstar {input.scaffolds}"
 
 rule abricate:
     input:
@@ -334,8 +355,6 @@ rule get_ppng_coverage:
 
 rule get_target_coverage:
     input:
-        mlst_dir = "mlst/bin/mlst",
-        starmlst_dir = "starmlst/bin/mlst",
         mlst = "step3_typing/{sample}_mlst.tsv",
         ngmast= "step3_typing/{sample}_ngmast.tsv",
         ngstar= "step3_typing/{sample}_ngstar.tsv"

@@ -18,7 +18,7 @@ elif db == "rplf":
 
 params_mlst_dir = snakemake.params.mlst_dir
 
-dbdir = os.path.join(params_mlst_dir, 'db', 'pubmlst', db)
+dbdir = os.path.join(params_mlst_dir, db)
 version_log = os.path.join(dbdir, "version.log")
 if not os.path.exists(dbdir):
     os.makedirs(dbdir)
@@ -41,14 +41,32 @@ if snakemake.params.update_db != "no":
 
 if snakemake.params.update_db == "no":
     with open(snakemake.output.log, 'w') as o:
-        o.write("Database update not requested.\n")
+        o.write("Database update not requested, using existing database from {}.\n".format(version))
 elif version != online_version and db != "ngstar":
     profiles = scheme_info["profiles_csv"]
     response = urlopen(profiles)
     data = response.read()
     profiles_local = os.path.join(dbdir, db + '.txt')
+    mlst_ccs = []
+    rplf_species = []
     with open(profiles_local, 'wb') as o:
-        o.write(data)
+        for line in data.decode().split("\n"):
+            if db == "mlst":
+                o.write("\t".join(line.split("\t")[:-1]) + "\n")
+                mlst_ccs.append([line.split("\t")[0], line.split("\t")[-1]])
+            elif db == "rplf":
+                o.write("\t".join(line.split("\t")[:-2]) + "\n")
+                rplf_species.append([line.split("\t")[0], line.split("\t")[2]])
+            else:
+                o.write(line + "\n")
+    if db == "mlst":
+        with open(os.path.join(dbdir, "ccs.txt"), 'w') as o:
+            for i in mlst_ccs:
+                o.write("\t".join(i) + "\n")
+    elif db == "rplf":
+        with open(os.path.join(dbdir, "species.txt"), 'w') as o:
+            for i in rplf_species:
+                o.write("\t".join(i) + "\n")
     for i in scheme_info['loci']:
         loci = i.split('/')[-1]
         response = urlopen(i)
