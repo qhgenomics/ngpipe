@@ -5,25 +5,23 @@ import os
 
 def create_coverage_files(input_file, scheme, mlst_dir, outfile):
     with (open(input_file) as f, open("step5_cov/{}.{}.fasta".format(snakemake.wildcards.sample, scheme), "w") as o):
+        header = f.readline().rstrip().split("\t")
         splitline = f.readline().rstrip().split("\t")
-        contig, scheme, profile = splitline[:3]
-        alleles = splitline[3:]
-        for i in alleles:
-            gene = i.split('(')[0]
-            allele = i.split('(')[1].split(')')[0]
+        contig, profile = splitline[:2]
+        alleles = splitline[2:]
+        for allele, gene in zip(alleles, header[2:]):
             if ',' in allele:
                 allele = allele.split(',')[0]
             allele = allele.replace("?", "").replace("~", "")
             getseq = False
-            with open("{}/db/pubmlst/{}/{}.tfa".format(mlst_dir.replace("bin/mlst", ""), scheme, gene)) as f:
+            if allele == "" or allele == "-" or allele == "new":
+                allele = "1"
+            with open("{}/{}/{}.tfa".format(mlst_dir, scheme, gene)) as f:
                 for line in f:
                     if line.startswith(">"):
                         if getseq:
                             getseq = False
                             break
-                        elif allele == '-':
-                            o.write(line)
-                            getseq = True
                         elif line.rstrip() == ">{}_{}".format(gene, allele):
                             o.write(line)
                             getseq = True
@@ -40,6 +38,6 @@ def create_coverage_files(input_file, scheme, mlst_dir, outfile):
                          " samtools depth -aa step5_cov/{sample}.{scheme}.bam > {cov}".format(
             sample=snakemake.wildcards.sample, scheme=scheme, contig_dir=snakemake.params.contig_dir, cov=outfile), shell=True).wait()
 
-create_coverage_files(snakemake.input.mlst, "mlst", snakemake.input.mlst_dir, snakemake.output.mlst_cov )
-create_coverage_files(snakemake.input.ngstar, "ngstar", snakemake.input.starmlst_dir, snakemake.output.ngstar_cov)
-create_coverage_files(snakemake.input.ngmast, "ngmast", snakemake.input.mlst_dir, snakemake.output.ngmast_cov)
+create_coverage_files(snakemake.input.mlst, "mlst", snakemake.params.mlst_dir, snakemake.output.mlst_cov )
+create_coverage_files(snakemake.input.ngstar, "ngstar", snakemake.params.mlst_dir, snakemake.output.ngstar_cov)
+create_coverage_files(snakemake.input.ngmast, "ngmast", snakemake.params.mlst_dir, snakemake.output.ngmast_cov)

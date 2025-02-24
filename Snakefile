@@ -137,7 +137,7 @@ rule update_db:
         shell("claMLST create --force {params.mlst_dir}/pymlst_ngmast {params.mlst_dir}/ngmast/ngmast.txt "
               "{params.mlst_dir}/ngmast/porB.tfa {params.mlst_dir}/ngmast/tbpB.tfa")
         shell("claMLST create --force {params.mlst_dir}/pymlst_rplf {params.mlst_dir}/rplf/rplf.txt {params.mlst_dir}/rplf/rplF.tfa")
-        shell("claMLST create --force {params.mlst_dir}/pymlst_mlst {params.mlst_dir}/mlst/mlst.txt {params.mlst_idr}/mlst/abcZ.tfa "
+        shell("claMLST create --force {params.mlst_dir}/pymlst_mlst {params.mlst_dir}/mlst/mlst.txt {params.mlst_dir}/mlst/abcZ.tfa "
               "{params.mlst_dir}/mlst/adk.tfa {params.mlst_dir}/mlst/aroE.tfa {params.mlst_dir}/mlst/fumC.tfa "
               "{params.mlst_dir}/mlst/gdh.tfa {params.mlst_dir}/mlst/pdhC.tfa {params.mlst_dir}/mlst/pgm.tfa ")
 
@@ -151,9 +151,9 @@ rule qc:
     input:
         scaffolds = "step2_assembly/metaspades_{sample}/scaffolds.fasta"
     output:
-        qc1 = "step1_fastqc/{sample}_R1_fastqc.html",
-        qc2 = "step1_fastqc/{sample}_R2_fastqc.html",
-        quast = "step1_fastqc/{sample}_quast/report.txt"
+        qc1 = "step1_qc/{sample}_R1_fastqc.html",
+        qc2 = "step1_qc/{sample}_R2_fastqc.html",
+        quast = "step1_qc/{sample}_quast/report.txt"
     threads: 24
     run:
         import subprocess
@@ -161,11 +161,11 @@ rule qc:
         read2 = "{}/{}_R2.fastq.gz".format(params.read_dir, wildcards.sample)
         if params.read_dir != "none":
             subprocess.Popen("fastqc {} {} -o step1_qc -t {}".format(read1, read2, threads), shell=True).wait()
-            subprocess.Popen("quast.py {} -r {} -g {} -o step1_fastqc/{}_quast/ -1 {} -2 {} --threads {}".format(
+            subprocess.Popen("quast.py {} -r {} -g {} -o step1_qc/{}_quast/ -1 {} -2 {} --threads {}".format(
                 input.scaffolds, params.quast_fasta, params.quast_gff, wildcards.sample, read1, read2, threads), shell=True).wait()
         else:
             subprocess.Popen("mkdir -p step1_fastqc && touch {} && touch {}".format(output.qc1, output.qc2), shell=True).wait()
-            subprocess.Popen("quast.py {} -r {} -g {} -o step1_fastqc/{}_quast/ --threads {}".format(
+            subprocess.Popen("quast.py {} -r {} -g {} -o step1_qc/{}_quast/ --threads {}".format(
                 input.scaffolds, params.quast_fasta, params.quast_gff, wildcards.sample, threads), shell=True).wait()
 
 rule assemble_reads:
@@ -200,7 +200,7 @@ rule ng_typing:
     input:
         updated_db = "database.log",
         scaffolds = "step2_assembly/metaspades_{sample}/scaffolds.fasta",
-    param:
+    params:
         mlst_dir = config["mlst_dir"]
     output:
         mlst = "step3_typing/{sample}_mlst.tsv",
@@ -209,10 +209,10 @@ rule ng_typing:
         rplf = "step3_typing/{sample}_rplf.tsv"
     threads: 24
     shell:
-        "claMLST -o {output.mlst} {params.mlst_dir}/mlst {input.scaffolds} && "
-        "claMLST -o {output.ngmast} {params.mlst_dir}/ngmast {input.scaffolds} && "
-        "claMLST -o {output.rplf} {params.mlst_dir}/rplf {input.scaffolds} && "
-        "claMLST -o {output.ngstar} {params.mlst_dir}/ngstar {input.scaffolds}"
+        "claMLST search -o {output.mlst} {params.mlst_dir}/pymlst_mlst {input.scaffolds} && "
+        "claMLST search -o {output.ngmast} {params.mlst_dir}/pymlst_ngmast {input.scaffolds} && "
+        "claMLST search -o {output.rplf} {params.mlst_dir}/pymlst_rplf {input.scaffolds} && "
+        "claMLST search -o {output.ngstar} {params.mlst_dir}/pymlst_ngstar {input.scaffolds}"
 
 rule abricate:
     input:
@@ -360,7 +360,8 @@ rule get_target_coverage:
         ngstar= "step3_typing/{sample}_ngstar.tsv"
     params:
         read_dir = config["read_dir"],
-        contig_dir= config["contig_dir"]
+        contig_dir = config["contig_dir"],
+        mlst_dir = config["mlst_dir"]
     output:
         mlst_cov = "step5_cov/{sample}.mlst.cov",
         ngstar_cov = "step5_cov/{sample}.ngstar.cov",
@@ -372,8 +373,8 @@ rule get_target_coverage:
 rule create_output:
     input:
         updated_db = "database.log",
-        qc1 = "step1_fastqc/{sample}_R1_fastqc.html",
-        qc2 = "step1_fastqc/{sample}_R2_fastqc.html",
+        qc1 = "step1_qc/{sample}_R1_fastqc.html",
+        qc2 = "step1_qc/{sample}_R2_fastqc.html",
         scaffolds = "step2_assembly/metaspades_{sample}/scaffolds.fasta",
         mlst = "step3_typing/{sample}_mlst.tsv",
         ngmast = "step3_typing/{sample}_ngmast.tsv",

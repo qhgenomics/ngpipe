@@ -33,7 +33,7 @@ def resolve_mult_allele(allele, scheme):
 
 
 def update_profile(profile, scheme):
-    profiles = os.path.join(snakemake.params.mlst_dir, "db", "pubmlst", scheme, scheme + ".txt")
+    profiles = os.path.join(snakemake.params.mlst_dir, scheme, scheme + ".txt")
     new_profile = []
     for i in profile:
         new_profile.append(i.split('(')[1].split(')')[0].replace("~", "").replace("?", ""))
@@ -50,75 +50,56 @@ def update_profile(profile, scheme):
 headers = ["Sample", "MLST", "abcZ", "adk", "aroE", "fumC", "gdh", "pdhC", "pgm", "NgSTAR", "penA NgSTAR", "penA comment",
            "mtrR NgSTAR", "mtrR comment", "porB NgSTAR", "porB comment", "ponA NgSTAR", "ponA comment",
            "gyrA NgSTAR", "gyrA comment", "parC NgSTAR", "parC comment", "23S NgSTAR", "23S comment", "NgMAST",
-           "porB NgMAST", "tbpB", "rplF", "rplF species", "rplf species comment", "rplf_depth", "ppnG coverage", "ppnG depth"]
+           "porB NgMAST", "tbpB", "rplF", "rplF species", "CC", "rplf_depth", "ppnG coverage", "ppnG depth"]
 for i in snakemake.params.positions.split(','):
     headers.append("23S_bases_pos{}:a:t:g:c".format(i))
 
 outstring = snakemake.params.sample
 with open(snakemake.input.mlst) as f:
-    contig, scheme, profile, abcZ, adk, aroE, fumC, gdh, pdhC, pgm = f.readline().rstrip().split("\t")
+    header = f.readline().rstrip()
+    contig, profile, abcZ, adk, aroE, fumC, gdh, pdhC, pgm = f.readline().rstrip().split("\t")
     new_profile = []
     for i in [abcZ, adk, aroE, fumC, gdh, pdhC, pgm]:
-        if ',' in i:
-            new_allele = resolve_mult_allele(i, "mlst")
+        if i == '':
+            new_profile.append('-')
         else:
-            new_allele = i
-        if snakemake.params.strictness == "strict" and ("?" in new_allele or "~" in new_allele):
-            new_allele = '{}(-)'.format(new_allele.split('(')[0])
-        elif snakemake.params.strictness == "partial" and "~" in new_allele:
-            new_allele = '{}(-)'.format(new_allele.split('(')[0])
-        new_profile.append(new_allele)
-    if new_profile != [abcZ, adk, aroE, fumC, gdh, pdhC, pgm]:
-        abcZ, adk, aroE, fumC, gdh, pdhC, pgm = new_profile
-        profile = update_profile(new_profile, "mlst")
+            new_profile.append(i)
 
 
 outstring += "\t" + profile
-outstring += "\t" + abcZ.split('(')[1].split(')')[0]
-outstring += "\t" + adk.split('(')[1].split(')')[0]
-outstring += "\t" + aroE.split('(')[1].split(')')[0]
-outstring += "\t" + fumC.split('(')[1].split(')')[0]
-outstring += "\t" + gdh.split('(')[1].split(')')[0]
-outstring += "\t" + pdhC.split('(')[1].split(')')[0]
-outstring += "\t" + pgm.split('(')[1].split(')')[0]
+outstring += "\t".join(new_profile)
 
 
 
 with open(snakemake.input.ngstar) as f:
-    contig, scheme, profile, penA, mtrR, porB, ponA, gyrA, parC, rna23S = f.readline().rstrip().split("\t")
+    header = f.readline().rstrip()
+    contig, profile, penA, mtrR, porB, ponA, gyrA, parC, rna23S = f.readline().rstrip().split("\t")
     new_profile = []
     for i in [penA, mtrR, porB, ponA, gyrA, parC, rna23S]:
-        print(i)
-        if ',' in i:
-            new_allele = resolve_mult_allele(i, "ngstar")
+        if i == '':
+            new_profile.append('-')
         else:
-            new_allele = i
-        print(new_allele)
-        if snakemake.params.strictness == "strict" and ("?" in new_allele or "~" in new_allele):
-            new_allele = '{}(-)'.format(new_allele.split('(')[0])
-        elif snakemake.params.strictness == "partial" and "~" in new_allele:
-            new_allele = '{}(-)'.format(new_allele.split('(')[0])
-        print(new_allele)
-        new_profile.append(new_allele)
-    if new_profile != [penA, mtrR, porB, ponA, gyrA, parC, rna23S]:
-        penA, mtrR, porB, ponA, gyrA, parC, rna23S = new_profile
-        profile = update_profile(new_profile, "ngstar")
+            new_profile.append(i)
+    profile = new_profile
 
 
 
 comment_dict = {"penA":{"-":"-"}, "mtrR":{"-":"-"}, "porB":{"-":"-"}	, "ponA":{"-":"-"}, "gyrA":{"-":"-"}, "parC":{"-":"-"}, "rna23S":{"-":"-"}}
-with open(os.path.join(snakemake.params.mlst_dir, "db", "pubmlst", "ngstar", "penA.tfa.comments")) as f:
-    f.readline()
-    for line in f:
-        allele, comment = line.rstrip().split("\t")[:2]
-        allele = "{:.3f}".format(float(allele)).replace('.', '')
+
+for i in comment_dict:
+    with open(os.path.join(snakemake.params.mlst_dir, "ngstar", "{}.tfa.comments".format(i))) as f:
+        f.readline()
+        for line in f:
+            allele, comment = line.rstrip().split("\t")[:2]
+            allele = "{:.3f}".format(float(allele)).replace('.', '')
         comment_dict["penA"][allele] = comment
-with open(os.path.join(snakemake.params.mlst_dir, "db", "pubmlst", "ngstar", "mtrR.tfa.comments")) as f:
+
+with open(os.path.join(snakemake.params.mlst_dir, "ngstar", "mtrR.tfa.comments")) as f:
     f.readline()
     for line in f:
         allele, comment = line.rstrip().split("\t")[:2]
         comment_dict["mtrR"][allele] = comment
-with open(os.path.join(snakemake.params.mlst_dir, "db", "pubmlst", "ngstar", "porB.tfa.comments")) as f:
+with open(os.path.join(snakemake.params.mlst_dir, "ngstar", "porB.tfa.comments")) as f:
     f.readline()
     for line in f:
         allele, comment = line.rstrip().split("\t")[:2]

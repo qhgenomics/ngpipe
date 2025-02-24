@@ -49,16 +49,18 @@ elif version != online_version and db != "ngstar":
     profiles_local = os.path.join(dbdir, db + '.txt')
     mlst_ccs = []
     rplf_species = []
-    with open(profiles_local, 'wb') as o:
+    with open(profiles_local, 'w') as o:
         for line in data.decode().split("\n"):
+            if line.rstrip() == "":
+                continue
             if db == "mlst":
                 o.write("\t".join(line.split("\t")[:-1]) + "\n")
                 mlst_ccs.append([line.split("\t")[0], line.split("\t")[-1]])
             elif db == "rplf":
-                o.write("\t".join(line.split("\t")[:-2]) + "\n")
+                o.write("\t".join(line.split("\t")[:-2]).replace("'", "") + "\n")
                 rplf_species.append([line.split("\t")[0], line.split("\t")[2]])
             else:
-                o.write(line + "\n")
+                o.write(line.replace("NG-MAST_", "") + "\n")
     if db == "mlst":
         with open(os.path.join(dbdir, "ccs.txt"), 'w') as o:
             for i in mlst_ccs:
@@ -77,8 +79,8 @@ elif version != online_version and db != "ngstar":
         loci_local = os.path.join(dbdir, loci + '.tfa')
         loci_local = loci_local.replace("'", "")
         loci_local = loci_local.replace("NG-MAST_", "")
-        with open(loci_local, 'wb') as o:
-            o.write(data)
+        with open(loci_local, 'w') as o:
+            o.write(data.decode().replace("'", "").replace("NG-MAST_", ""))
 
 
     with open(version_log, 'w') as o:
