@@ -7,26 +7,39 @@ def create_coverage_files(input_file, scheme, mlst_dir, outfile):
     with (open(input_file) as f, open("step5_cov/{}.{}.fasta".format(snakemake.wildcards.sample, scheme), "w") as o):
         header = f.readline().rstrip().split("\t")
         splitline = f.readline().rstrip().split("\t")
-        contig, profile = splitline[:2]
         alleles = splitline[2:]
         for allele, gene in zip(alleles, header[2:]):
-            if ',' in allele:
-                allele = allele.split(',')[0]
-            allele = allele.replace("?", "").replace("~", "")
-            getseq = False
+            if '-' in allele:
+                allele = allele.split('-')[0]
+            if '|' in allele:
+                allele = allele.split('|')[0]
             if allele == "" or allele == "-" or allele == "new":
                 allele = "1"
-            with open("{}/{}/{}.tfa".format(mlst_dir, scheme, gene)) as f:
+            if gene in ['penA', 'mtrR', 'porB', 'ponA', 'gyrA', 'parC', '23S']:
+                gene_scheme = "ngstar"
+            elif gene in ['abcZ', 'adk', 'aroE', 'fumC', 'gdh', 'pdhC', 'pgm']:
+                gene_scheme = "mlst"
+            elif gene in ['POR', 'TBPB']:
+                gene_scheme = "ngmast"
+            else:
+                gene_scheme = None
+            if gene_scheme != scheme:
+                continue
+            if scheme == "ngstar" and not '.' in allele:
+                allele += '.0'
+            with open("{}/{}.fas".format(mlst_dir, gene)) as f:
+                getseq = False
                 for line in f:
                     if line.startswith(">"):
                         if getseq:
-                            getseq = False
                             break
                         elif line.rstrip() == ">{}_{}".format(gene, allele):
                             o.write(line)
                             getseq = True
                     elif getseq:
                         o.write(line)
+            if not getseq:
+                raise Exception("{}_{} not found in {}/{}.fas".format(gene, allele, mlst_dir, gene))
     if snakemake.params.read_dir != "none":
         subprocess.Popen("minimap2 -ax sr step5_cov/{sample}.{scheme}.fasta {read_dir}/{sample}_R1.fastq.gz {read_dir}/{sample}_R2.fastq.gz"
                          " | samtools view -bS - | samtools sort -o step5_cov/{sample}.{scheme}.bam && "
@@ -38,6 +51,6 @@ def create_coverage_files(input_file, scheme, mlst_dir, outfile):
                          " samtools depth -aa step5_cov/{sample}.{scheme}.bam > {cov}".format(
             sample=snakemake.wildcards.sample, scheme=scheme, contig_dir=snakemake.params.contig_dir, cov=outfile), shell=True).wait()
 
-create_coverage_files(snakemake.input.mlst, "mlst", snakemake.params.mlst_dir, snakemake.output.mlst_cov )
-create_coverage_files(snakemake.input.ngstar, "ngstar", snakemake.params.mlst_dir, snakemake.output.ngstar_cov)
-create_coverage_files(snakemake.input.ngmast, "ngmast", snakemake.params.mlst_dir, snakemake.output.ngmast_cov)
+create_coverage_files(snakemake.input.pyngo, "mlst", snakemake.params.mlst_db, snakemake.output.mlst_cov )
+create_coverage_files(snakemake.input.pyngo, "ngstar", snakemake.params.mlst_db, snakemake.output.ngstar_cov)
+create_coverage_files(snakemake.input.pyngo, "ngmast", snakemake.params.mlst_db, snakemake.output.ngmast_cov)

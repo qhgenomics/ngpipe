@@ -47,7 +47,7 @@ rule compile_output:
         summaries = expand("step6_output/{sample}_summary.tsv", sample=get_samples(config["samples"]))
     output:
         summary = "summary.tsv",
-        multi_qc_report = "multqc_report/multiqc_report.html"
+        multi_qc_report = "multiqc_report/multiqc_report.html"
     run:
         first = True
         shell("multiqc step1_qc/ -e samtools -o multiqc_report")
@@ -63,10 +63,33 @@ rule compile_output:
 
 
 
+rule update_rplf:
+    params:
+        mlst_dir = config["mlst_db"],
+        update_db = config["update_db"],
+        db = "rplf"
+    output:
+        log = "rplf.log"
+    script:
+        "scripts/update_db.py"
 
+
+
+rule update_mlst:
+    params:
+        mlst_dir = config["mlst_db"],
+        update_db = config["update_db"],
+        db = "mlst"
+    output:
+        log = "mlst.log",
+    script:
+        "scripts/update_db.py"
 
 
 rule update_db:
+    input:
+        mlst = "mlst.log",
+        rplf = "rplf.log"
     params:
         mlst_db = config["mlst_db"],
         update_db = config["update_db"],
@@ -95,7 +118,13 @@ rule update_db:
             raise ValueError("Database file missing, please point to pyngost database or set update_db to True.")
         else:
             log_text = "Database update not requested: using database downloaded on {}.".format(download_date)
-        with open(output.updated_db, 'w') as o:
+        shell("claMLST create --force {params.mlst_db}/pymlst_rplf {params.mlst_db}/rplf/rplf.txt {params.mlst_db}/rplf/rplF.tfa")
+        shell("claMLST create --force {params.mlst_db}/pymlst_mlst {params.mlst_db}/mlst/mlst.txt {params.mlst_db}/mlst/abcZ.tfa "
+              "{params.mlst_db}/mlst/adk.tfa {params.mlst_db}/mlst/aroE.tfa {params.mlst_db}/mlst/fumC.tfa "
+              "{params.mlst_db}/mlst/gdh.tfa {params.mlst_db}/mlst/pdhC.tfa {params.mlst_db}/mlst/pgm.tfa ")
+        with open(output.updated_db, 'w') as o, open(input.mlst) as mlst_log, open(input.rplf) as rplf_log:
+            o.write("mlst updated: " + mlst_log.readline())
+            o.write("rplf updated: " + rplf_log.readline())
             o.write(log_text)
 
 
@@ -163,9 +192,13 @@ rule ng_typing:
         mlst_db = config["mlst_db"]
     output:
         pyngo_out = "step3_typing/{sample}_pyngo.tsv",
+        mlst= "step3_typing/{sample}_mlst.tsv",
+        rplf= "step3_typing/{sample}_rplf.tsv"
     threads: 24
     shell:
-        "pyngoST.py -i {input.scaffolds} -s NG-STAR,MLST,NG-MAST -c -m -b -a -o {wildcards.sample}_pyngo.tsv -q step3_typing -t {threads} -p {params.mlst_db}"
+        "pyngoST.py -i {input.scaffolds} -s NG-STAR,MLST,NG-MAST -c -m -b -a -o {wildcards.sample}_pyngo.tsv -q step3_typing -t {threads} -p {params.mlst_db} && "
+        "claMLST search -o {output.mlst} {params.mlst_db}/pymlst_mlst {input.scaffolds} && "
+        "claMLST search -o {output.rplf} {params.mlst_db}/pymlst_rplf {input.scaffolds}"
 
 rule abricate:
     input:
@@ -308,11 +341,11 @@ rule get_ppng_coverage:
 
 rule get_target_coverage:
     input:
-        pyngo_file = "step3_typing/{sample}_pyngo.tsv",
+        pyngo = "step3_typing/{sample}_pyngo.tsv",
     params:
         read_dir = config["read_dir"],
         contig_dir = config["contig_dir"],
-        mlst_dir = config["mlst_db"]
+        mlst_db = config["mlst_db"]
     output:
         mlst_cov = "step5_cov/{sample}.mlst.cov",
         ngstar_cov = "step5_cov/{sample}.ngstar.cov",
@@ -328,6 +361,7 @@ rule create_output:
         qc2 = "step1_qc/{sample}_R2_fastqc.html",
         scaffolds = "step2_assembly/metaspades_{sample}/scaffolds.fasta",
         pyngo = "step3_typing/{sample}_pyngo.tsv",
+        rplf = "step3_typing/{sample}_rplf.tsv",
         abricate = "step4_abricate/{sample}_abricate.txt",
         ppng_cov = "step5_cov/{sample}_ppng.cov",
         rplf_cov = "step5_cov/{sample}_rplf.cov",
@@ -338,8 +372,7 @@ rule create_output:
     params:
         mlst_dir = config["mlst_db"],
         sample = "{sample}",
-        positions = config["positions"],
-        strictness = config["strictness"]
+        positions = config["positions"]
     output:
         tsv = "step6_output/{sample}_summary.tsv"
     script:

@@ -31,7 +31,7 @@ else:
 
 
 
-if snakemake.params.update_db != "no":
+if snakemake.params.update_db != "false":
     with urlopen("https://rest.pubmlst.org/db/pubmlst_neisseria_seqdef/schemes/" + scheme) as response:
         response_content = response.read().decode('utf-8')
     scheme_info = json.loads(response_content)
@@ -39,7 +39,7 @@ if snakemake.params.update_db != "no":
 
 
 
-if snakemake.params.update_db == "no":
+if snakemake.params.update_db == "false":
     with open(snakemake.output.log, 'w') as o:
         o.write("Database update not requested, using existing database from {}.\n".format(version))
 elif version != online_version and db != "ngstar":
