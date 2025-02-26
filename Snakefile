@@ -75,7 +75,7 @@ rule update_db:
         updated_db = "database.log",
     run:
         from datetime import datetime
-        download_date_file = params.mlst_db +".download.log"
+        download_date_file = os.path.join(params.mlst_db, "download_date.log")
         today = datetime.today().strftime('%Y-%m-%d')
         download_date = None
         if os.path.exists(download_date_file):
@@ -83,14 +83,12 @@ rule update_db:
                 download_date = f.readline().split(":")[0]
         if params.update_db and download_date == today and os.path.exists(params.mlst_db):
             log_text = "{}: Database already downloaded today, skipping download.".format(today)
-        elif params.update_db and download_date != None and os.path.exists(params.mlst_db):
-            log_text = "{}: found database updated {}, updating.".format(today, download_date)
-            shell("pyngoST.py -u -p {} -cc {}".format(params.mlst_db, params.ngstar_cc))
-            with open(download_date_file, 'w') as f:
-                f.write("{}: database downloaded.".format(today))
         elif params.update_db:
-            log_text = "{}: database file missing, downloading fresh.".format(today,download_date)
-            shell("pyngoST.py -d -p {} -cc {}".format(params.mlst_db, params.ngstar_cc))
+            if download_date is None:
+                log_text = "{}: no database found. Downloading database".format(today)
+            else:
+                log_text = "{}: found database updated {}, updating.".format(today, download_date)
+            shell("pyngoST.py -d -n {} -cc {}".format(params.mlst_db, params.ngstar_cc))
             with open(download_date_file, 'w') as f:
                 f.write("{}: database downloaded.".format(today))
         elif download_date is None or not os.path.exists(params.mlst_db):
@@ -122,12 +120,12 @@ rule qc:
         read2 = "{}/{}_R2.fastq.gz".format(params.read_dir, wildcards.sample)
         if params.read_dir != "none":
             subprocess.Popen("fastqc {} {} -o step1_qc -t {}".format(read1, read2, threads), shell=True).wait()
-            subprocess.Popen("quast.py {} -r {} -g {} -s {} -o step1_qc/{}_quast/ -1 {} -2 {} --threads {}".format(
-                input.scaffolds, params.quast_fasta, params.quast_gff, wildcards.sample, wildcards.sample, read1, read2, threads), shell=True).wait()
+            subprocess.Popen("quast.py {} -r {} -g {} -L -o step1_qc/{}_quast/ -1 {} -2 {} --threads {}".format(
+                input.scaffolds, params.quast_fasta, params.quast_gff, wildcards.sample, read1, read2, threads), shell=True).wait()
         else:
             subprocess.Popen("mkdir -p step1_fastqc && touch {} && touch {}".format(output.qc1, output.qc2), shell=True).wait()
-            subprocess.Popen("quast.py {} -r {} -g {} -s {} -o step1_qc/{}_quast/ --threads {}".format(
-                input.scaffolds, params.quast_fasta, params.quast_gff, wildcards.sample, wildcards.sample, threads), shell=True).wait()
+            subprocess.Popen("quast.py {} -r {} -g {} -L -o step1_qc/{}_quast/ --threads {}".format(
+                input.scaffolds, params.quast_fasta, params.quast_gff, wildcards.sample, threads), shell=True).wait()
 
 rule assemble_reads:
     params:
@@ -167,7 +165,7 @@ rule ng_typing:
         pyngo_out = "step3_typing/{sample}_pyngo.tsv",
     threads: 24
     shell:
-        "pyngoST -i {input.scaffolds} -g -c -m -b -a -o {wildcards.sample}_pyngo.tsv -q step3_typing -t {threads} -p {params.mlst_db}"
+        "pyngoST.py -i {input.scaffolds} -s NG-STAR,MLST,NG-MAST -c -m -b -a -o {wildcards.sample}_pyngo.tsv -q step3_typing -t {threads} -p {params.mlst_db}"
 
 rule abricate:
     input:
@@ -204,7 +202,6 @@ rule rplf_mapping:
     params:
         read_dir = config["read_dir"],
         contig_dir = config["contig_dir"],
-        reference = config["rplf_fasta"],
         reference = workflow.source_path("data/rplf_target.fasta")
     output:
         cov = "step5_cov/{sample}_rplf_coverage.txt",
@@ -243,7 +240,7 @@ rule rrna_mapping:
 
 rule rrna_alleles:
     params:
-        reference = config["rrna_fasta"],
+        reference = workflow.source_path("data/rrna_target.fasta"),
         positions = config["positions"]
     input:
         bam = "step5_cov/{sample}_rrna.bam"
@@ -311,9 +308,7 @@ rule get_ppng_coverage:
 
 rule get_target_coverage:
     input:
-        mlst = "step3_typing/{sample}_mlst.tsv",
-        ngmast= "step3_typing/{sample}_ngmast.tsv",
-        ngstar= "step3_typing/{sample}_ngstar.tsv"
+        pyngo_file = "step3_typing/{sample}_pyngo.tsv",
     params:
         read_dir = config["read_dir"],
         contig_dir = config["contig_dir"],
@@ -332,10 +327,7 @@ rule create_output:
         qc1 = "step1_qc/{sample}_R1_fastqc.html",
         qc2 = "step1_qc/{sample}_R2_fastqc.html",
         scaffolds = "step2_assembly/metaspades_{sample}/scaffolds.fasta",
-        mlst = "step3_typing/{sample}_mlst.tsv",
-        ngmast = "step3_typing/{sample}_ngmast.tsv",
-        ngstar = "step3_typing/{sample}_ngstar.tsv",
-        rplf = "step3_typing/{sample}_rplf.tsv",
+        pyngo = "step3_typing/{sample}_pyngo.tsv",
         abricate = "step4_abricate/{sample}_abricate.txt",
         ppng_cov = "step5_cov/{sample}_ppng.cov",
         rplf_cov = "step5_cov/{sample}_rplf.cov",

@@ -1,5 +1,5 @@
 mlst_db:
-  /data/ngono/ngpipe/mlst/pyngo_db
+  /data/ngono/mlst_database/
 positions:
   2044,2045,2597
 read_dir:
