@@ -1,15 +1,5 @@
-mlst_dir:
-  /data/ngono/ngpipe/mlst
-ppng_fasta:
-  /data/ngono/ngpipe/data/ppng_target.fasta
-rplf_fasta:
-  /data/ngono/ngpipe/data/rplf_target.fasta
-rrna_fasta:
-  /data/ngono/ngpipe/data/rrna_target.fasta
-quast_ref_fasta:
-  /data/ngono/ngpipe/data/ref.fasta
-quast_ref_gff:
-  /data/ngono/ngpipe/data/ref.gff3
+mlst_db:
+  /data/ngono/ngpipe/mlst/pyngo_db
 positions:
   2044,2045,2597
 read_dir:
