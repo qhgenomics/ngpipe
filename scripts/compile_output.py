@@ -1,9 +1,9 @@
 import os
 
 
-headers = ['Sample', 'strain', 'NG-STAR', 'penA', 'mtrR', 'porB', 'ponA', 'gyrA', 'parC', '23S', 'NG-STAR_CC',
+headers = ['Sample', 'NG-STAR', 'penA', 'mtrR', 'porB', 'ponA', 'gyrA', 'parC', '23S', 'NG-STAR_CC',
            'penA_mosaic_type', 'MLST', 'abcZ', 'adk', 'aroE', 'fumC', 'gdh', 'pdhC', 'pgm', 'NG-MAST', 'POR',
-           'TBPB', 'rplF', 'rplF_species', 'CC', 'rplf_depth', 'ppnG coverage', 'ppnG depth']
+           'TBPB', 'rplF', 'rplF_species', 'rplf_depth', 'ppnG coverage', 'ppnG depth']
 
 for i in snakemake.params.positions.split(','):
     headers.append('23S_bases_pos{}:a:t:g:c'.format(i))
