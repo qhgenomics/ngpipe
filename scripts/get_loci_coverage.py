@@ -15,6 +15,8 @@ def create_coverage_files(input_file, scheme, mlst_dir, outfile):
                 allele = allele.split('|')[0]
             if allele == "" or allele == "-" or allele == "new":
                 allele = "1"
+                if gene == "penA":
+                    allele += '.001'
             if gene in ['penA', 'mtrR', 'porB', 'ponA', 'gyrA', 'parC', '23S']:
                 gene_scheme = "ngstar"
             elif gene in ['abcZ', 'adk', 'aroE', 'fumC', 'gdh', 'pdhC', 'pgm']:

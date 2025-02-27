@@ -24,7 +24,9 @@ with open(os.path.join(snakemake.params.mlst_dir, "rplf", "species.txt")) as f:
 
 with open(snakemake.input.rplf) as f:
     f.readline()
-    fasta, profile, rplf = f.readline().rstrip().split("\t")
+    fasta, profile, rplf = f.readline().rstrip("\n").split("\t")
+    if profile == "":
+        profile = '-'
 
 
 if profile in rplf_dict:
