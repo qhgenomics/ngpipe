@@ -3,16 +3,18 @@ import os
 
 headers = ['Sample', 'NG-STAR', 'penA', 'mtrR', 'porB', 'ponA', 'gyrA', 'parC', '23S', 'NG-STAR_CC',
            'penA_mosaic_type', 'MLST', 'abcZ', 'adk', 'aroE', 'fumC', 'gdh', 'pdhC', 'pgm', 'NG-MAST', 'POR',
-           'TBPB', 'rplF', 'rplF_species', 'rplf_depth', 'ppnG coverage', 'ppnG depth']
+           'TBPB', 'rplF', 'rplF_species', 'rplf_depth', 'ppnG coverage', 'ppnG depth',
+           'penA_comment', 'mtrR_comment', 'porB_comment', 'ponA_comment', 'gyrA_comment', 'parC_comment', '23S_comment']
 
 for i in snakemake.params.positions.split(','):
-    headers.append('23S_bases_pos{}:a:t:g:c'.format(i))
+    headers.append('23S_bases_pos_{}:a:t:g:c'.format(i))
 
 outstring = snakemake.params.sample
 
 with open(snakemake.input.pyngo) as f:
     header = f.readline().rstrip()
     body = f.readline().rstrip().split("\t")
+    ngstar_alleles = body[2:9]
     outstring += "\t" + "\t".join(body[1:])
 
 rplf_dict = {}
@@ -48,6 +50,20 @@ with open(snakemake.input.ppng_cov) as f:
     depth = f.readline().rstrip().split()[1]
 
 outstring += "\t" + cov + "\t" + depth
+
+comment_dict = {}
+for i, allele in zip(['penA', 'mtrR', 'porB', 'ponA', 'gyrA', 'parC', '23S'], ngstar_alleles):
+    comment_file = os.path.join(snakemake.params.mlst_dir, "ngstar", i + ".comments")
+    with open(comment_file) as f:
+        f.readline()
+        comment = "not found"
+        for line in f:
+            allele_file = line.split("\t")[0]
+            iso_class = line.split("\t")[7]
+            if allele == allele_file:
+                comment = iso_class
+        outstring += "\t{}".format(comment)
+
 
 with open(snakemake.input.rrna_alleles) as f:
     f.readline()

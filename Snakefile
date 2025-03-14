@@ -25,14 +25,17 @@ def get_samples(filename):
 
 rule all:
     input:
-        summary = "summary.tsv",
+        results = "results.tsv",
+        qc = "qclog.tsv",
+        qc_summary = "summary.tsv",
+        multi_qc_report = "multiqc_report/multiqc_report.html",
         mst = "mst.svg"
 
 
 
 rule create_mst:
     input:
-        summary = "summary.tsv"
+        summary = "results.tsv"
     output:
         mst = "mst.svg"
     params:
@@ -41,25 +44,71 @@ rule create_mst:
     script:
         "scripts/create_mst.py"
 
+rule multi_qc:
+    input:
+        qc = "qclog.tsv"
+    output:
+        multi_qc_report = "multiqc_report/multiqc_report.html"
+    shell:
+        "multiqc step1_qc/ -e samtools -o multiqc_report -f"
+
 
 rule compile_output:
     input:
         summaries = expand("step6_output/{sample}_summary.tsv", sample=get_samples(config["samples"]))
     output:
-        summary = "summary.tsv",
-        multi_qc_report = "multiqc_report/multiqc_report.html"
+        results = "results.tsv",
+        qc = "qclog.tsv",
+        summary = "summary.tsv"
     run:
         first = True
-        shell("multiqc step1_qc/ -e samtools -o multiqc_report")
-        with open(output.summary, 'w') as o:
+        with open(output.results, 'w') as o, open(output.qc, 'w') as qc:
             for i in input.summaries:
                 with open(i) as f:
                     if first:
                         first = False
-                        o.write(f.readline())
+                        header = f.readline().rstrip().split("\t")
+                        for num, j in enumerate(header):
+                            if j.startswith("23S_bases_pos"):
+                                qcsplit = num
+                        qcsplit += 1
+                        freq_dict = {}
+                        for i in header[1:qcsplit]:
+                            freq_dict[i] = {}
+                        o.write("\t".join(header[:qcsplit]) + "\n")
+                        qc.write("Sample\t" + "\t".join(header[qcsplit:]) + "\n")
                     else:
                         f.readline()
-                    o.write(f.readline())
+                    body = f.readline().rstrip().split("\t")
+                    o.write("\t".join(body[:qcsplit]) + "\n")
+                    for cat, j in zip(header[1:qcsplit], body[1:qcsplit]):
+                        if not j in freq_dict[cat]:
+                            freq_dict[cat][j] = 0
+                        freq_dict[cat][j] += 1
+                    qc.write("{}\t".format(body[0]) + "\t".join(body[qcsplit:]) + "\n")
+        with open(output.summary,'w') as o:
+            outstring = ""
+            cats = {}
+            maxcats = 0
+            for i in header[1:qcsplit]:
+                outstring += i + "_category\t" + i + "_count\t" + i + "_percent\t"
+                thelist = list(freq_dict[i])
+                thelist.sort(key=lambda x: freq_dict[i][x], reverse=True)
+                cats[i] = thelist
+                if len(thelist) > maxcats:
+                    maxcats = len(thelist)
+            outstring = outstring[:-1] + "\n"
+            for i in range(maxcats):
+                for j in header[1:qcsplit]:
+                    if i < len(cats[j]):
+                        outstring += cats[j][i] + "\t" + str(freq_dict[j][cats[j][i]]) + "\t{:.2%}\t".format(freq_dict[j][cats[j][i]]/len(get_samples(config["samples"])))
+                    else:
+                        outstring += "\t\t\t"
+                outstring = outstring[:-1] + "\n"
+            o.write(outstring)
+
+
+
 
 
 
@@ -86,10 +135,21 @@ rule update_mlst:
         "scripts/update_db.py"
 
 
+rule update_ngstar:
+    params:
+        mlst_dir = config["mlst_db"],
+        update_db = config["update_db"],
+        db = "ngstar"
+    output:
+        log = "ngstar.log",
+    script:
+        "scripts/update_db.py"
+
 rule update_db:
     input:
         mlst = "mlst.log",
-        rplf = "rplf.log"
+        rplf = "rplf.log",
+        ngstar = "ngstar.log"
     params:
         mlst_db = config["mlst_db"],
         update_db = config["update_db"],

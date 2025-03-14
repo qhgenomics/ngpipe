@@ -13,6 +13,8 @@ def create_coverage_files(input_file, scheme, mlst_dir, outfile):
                 allele = allele.split('-')[0]
             if '|' in allele:
                 allele = allele.split('|')[0]
+            if "_" in allele:
+                allele = allele.split("_")[0]
             if allele == "" or allele == "-" or allele == "new":
                 allele = "1"
                 if gene == "penA":
@@ -29,6 +31,8 @@ def create_coverage_files(input_file, scheme, mlst_dir, outfile):
                 continue
             if scheme == "ngstar" and not '.' in allele:
                 allele += '.0'
+            if gene == "penA" and allele.endswith('0'):
+                allele = allele[:-1]
             with open("{}/{}.fas".format(mlst_dir, gene)) as f:
                 getseq = False
                 for line in f:
