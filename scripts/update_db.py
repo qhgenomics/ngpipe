@@ -102,6 +102,16 @@ elif db == "ngstar":
         ngstar_loci = 'https://ngstar.canada.ca/alleles/download?lang=en&loci_name='
         ngstar_profiles = 'https://ngstar.canada.ca/sequence_types/download?lang=en'
         ngstar_meta = 'https://ngstar.canada.ca/alleles/download_metadata?lang=en&loci_name='
+        ngstar_profile_meta = 'https://ngstar.canada.ca/sequence_types/download_metadata?lang=en'
+
+        response = urlopen(ngstar_profile_meta)
+        bytes_in = io.BytesIO(response.read())
+        wb = load_workbook(bytes_in)
+        ws = wb.active
+        comment_local = os.path.join(dbdir, 'ngstar_profile.comments')
+        with open(comment_local, 'w') as o:
+            for row in ws.iter_rows(values_only=True):
+                o.write("\t".join(map(str, row)).replace("\n", " ") + "\n")
         # Download allele fasta files
         for loci in locistar:
             # response = urlopen(ngstar_loci + loci)

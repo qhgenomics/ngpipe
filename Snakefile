@@ -432,7 +432,8 @@ rule create_output:
     params:
         mlst_dir = config["mlst_db"],
         sample = "{sample}",
-        positions = config["positions"]
+        positions = config["positions"],
+        read_dir = config["read_dir"]
     output:
         tsv = "step6_output/{sample}_summary.tsv"
     script:

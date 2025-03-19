@@ -47,15 +47,18 @@ def create_coverage_files(input_file, scheme, mlst_dir, outfile):
             if not getseq:
                 raise Exception("{}_{} not found in {}/{}.fas".format(gene, allele, mlst_dir, gene))
     if snakemake.params.read_dir != "none":
-        subprocess.Popen("minimap2 -ax sr step5_cov/{sample}.{scheme}.fasta {read_dir}/{sample}_R1.fastq.gz {read_dir}/{sample}_R2.fastq.gz"
-                         " | samtools view -bS - | samtools sort -o step5_cov/{sample}.{scheme}.bam && "
-                         " samtools depth -aa step5_cov/{sample}.{scheme}.bam > {cov}".format(
-            sample=snakemake.wildcards.sample, scheme=scheme, read_dir=snakemake.params.read_dir, cov=outfile), shell=True).wait()
+        subprocess.Popen("minimap2 -a -k22 -w11 --sr --frag=yes -A2 -B8 -O12,32 -E2,1 -b0 -r100 -p.5 -N20 -f1000,5000 "
+                     " -n1 -m20 -s40 -g10 -2K50m --heap-sort=yes --secondary=no step5_cov/{sample}.{scheme}.fasta "
+                     "{read_dir}/{sample}_R1.fastq.gz {read_dir}/{sample}_R2.fastq.gz"
+                     " | samtools view -bS - | samtools sort -o step5_cov/{sample}.{scheme}.bam && "
+                     " samtools depth -aa step5_cov/{sample}.{scheme}.bam > {cov}".format(
+        sample=snakemake.wildcards.sample, scheme=scheme, read_dir=snakemake.params.read_dir, cov=outfile), shell=True).wait()
     else:
-        subprocess.Popen("minimap2 -ax asm5 step5_cov/{sample}.{scheme}.fasta {contig_dir}/{sample}.fasta"
-                         " | samtools view -bS - | samtools sort -o step5_cov/{sample}.{scheme}.bam && "
-                         " samtools depth -aa step5_cov/{sample}.{scheme}.bam > {cov}".format(
-            sample=snakemake.wildcards.sample, scheme=scheme, contig_dir=snakemake.params.contig_dir, cov=outfile), shell=True).wait()
+         subprocess.Popen("minimap2 -a -k22 -w11 --sr --frag=yes -A2 -B8 -O12,32 -E2,1 -b0 -r100 -p.5 -N20 -f1000,5000 "
+                          " -n1 -m20 -s40 -g10 -2K50m --heap-sort=yes --secondary=no step5_cov/{sample}.{scheme}.fasta "
+                          "{contig_dir}/{sample}.fasta | samtools view -bS - | samtools sort -o step5_cov/{sample}.{scheme}.bam && "
+                          " samtools depth -aa step5_cov/{sample}.{scheme}.bam > {cov}".format(
+             sample=snakemake.wildcards.sample, scheme=scheme, contig_dir=snakemake.params.contig_dir, cov=outfile), shell=True).wait()
 
 create_coverage_files(snakemake.input.pyngo, "mlst", snakemake.params.mlst_db, snakemake.output.mlst_cov )
 create_coverage_files(snakemake.input.pyngo, "ngstar", snakemake.params.mlst_db, snakemake.output.ngstar_cov)
