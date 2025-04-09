@@ -40,10 +40,10 @@ def create_coverage_files(input_file, scheme, mlst_dir, outfile):
                         if getseq:
                             break
                         elif line.rstrip() == ">{}_{}".format(gene, allele):
-                            o.write(line)
+                            o.write(line.rstrip() + "\n")
                             getseq = True
                     elif getseq:
-                        o.write(line)
+                        o.write(line.rstrip() + "\n")
             if not getseq:
                 raise Exception("{}_{} not found in {}/{}.fas".format(gene, allele, mlst_dir, gene))
     if snakemake.params.read_dir != "none":

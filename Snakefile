@@ -27,11 +27,42 @@ rule all:
     input:
         results = "results.tsv",
         qc = "qclog.tsv",
-        qc_summary = "summary.tsv",
+        summary = "summary.tsv",
         multi_qc_report = "multiqc_report/multiqc_report.html",
-        mst = "mst.svg"
+        mst = "mst.svg",
+        version_log = "versions.tsv"
+    output:
+        workbook = "tables.xlsx"
+    run:
+        import os
+        import pandas as pd
+
+        the_files = [input.results, input.qc, input.summary, input.version_log]
+        if os.path.exists("multiqc_report/multiqc_data/multiqc_quast.txt"):
+            the_files.append("multiqc_report/multiqc_data/multiqc_quast.txt")
+        writer = pd.ExcelWriter(output.workbook,engine='xlsxwriter')
+        for f in the_files:
+            df = pd.read_csv(f, delimiter="\t", index_col=False)
+            df.to_excel(writer,sheet_name=f.split('/')[-1][:-4],index=False)
+        writer.close()
 
 
+rule get_versions:
+    output:
+        log = "versions.tsv"
+    run:
+        import subprocess
+        with open(output.log, 'w') as o:
+            o.write("snakemake\t" + subprocess.check_output("snakemake --version", shell=True).decode())
+            o.write("multiqc\t" + subprocess.check_output("multiqc --version", shell=True).decode().split()[-1] + "\n")
+            o.write("abricate\t" + subprocess.check_output("abricate --version", shell=True).decode().split()[-1] + "\n")
+            o.write("spades\t" + subprocess.check_output("spades.py --version", shell=True).decode().split()[-1] + "\n")
+            o.write("minimap\t" + subprocess.check_output("minimap2 --version", shell=True).decode())
+            o.write("samtools\t" + subprocess.check_output("samtools --version", shell=True).decode().split()[1] + "\n")
+            o.write("quast\t" + subprocess.check_output("quast.py --version", shell=True).decode().split()[-1] + "\n")
+            o.write("pyngoST\t" + subprocess.check_output("pyngoST.py --version", shell=True).decode())
+            o.write("claMLST\t" + subprocess.check_output("claMLST --version", shell=True).decode().split()[1] + "\n")
+            o.write("ngpipe\t0.01\n")
 
 rule create_mst:
     input:
@@ -73,19 +104,22 @@ rule compile_output:
                                 qcsplit = num
                         qcsplit += 1
                         freq_dict = {}
-                        for i in header[1:qcsplit]:
-                            freq_dict[i] = {}
+                        for j in header[1:qcsplit]:
+                            freq_dict[j] = {}
                         o.write("\t".join(header[:qcsplit]) + "\n")
-                        qc.write("Sample\t" + "\t".join(header[qcsplit:]) + "\n")
+                        qc.write("Sample")
+                        for j in header[qcsplit:]:
+                            qc.write("\t{}_{}".format(j.split("_")[0], j.split("_")[-1]))
+                        qc.write("\n")
                     else:
                         f.readline()
                     body = f.readline().rstrip().split("\t")
                     o.write("\t".join(body[:qcsplit]) + "\n")
+                    qc.write("{}\t".format(body[0]) + "\t".join(body[qcsplit:]) + "\n")
                     for cat, j in zip(header[1:qcsplit], body[1:qcsplit]):
                         if not j in freq_dict[cat]:
                             freq_dict[cat][j] = 0
                         freq_dict[cat][j] += 1
-                    qc.write("{}\t".format(body[0]) + "\t".join(body[qcsplit:]) + "\n")
         with open(output.summary,'w') as o:
             outstring = ""
             cats = {}
@@ -124,16 +158,6 @@ rule update_rplf:
 
 
 
-rule update_mlst:
-    params:
-        mlst_dir = config["mlst_db"],
-        update_db = config["update_db"],
-        db = "mlst"
-    output:
-        log = "mlst.log",
-    script:
-        "scripts/update_db.py"
-
 
 rule update_ngstar:
     params:
@@ -145,9 +169,8 @@ rule update_ngstar:
     script:
         "scripts/update_db.py"
 
-rule update_db:
+rule update_db_all:
     input:
-        mlst = "mlst.log",
         rplf = "rplf.log",
         ngstar = "ngstar.log"
     params:
@@ -156,36 +179,8 @@ rule update_db:
         ngstar_cc = workflow.source_path("data/240513_NGSTAR_CC_updated.csv")
     output:
         updated_db = "database.log",
-    run:
-        from datetime import datetime
-        download_date_file = os.path.join(params.mlst_db, "download_date.log")
-        today = datetime.today().strftime('%Y-%m-%d')
-        download_date = None
-        if os.path.exists(download_date_file):
-            with open(download_date_file) as f:
-                download_date = f.readline().split(":")[0]
-        if params.update_db and download_date == today and os.path.exists(params.mlst_db):
-            log_text = "{}: Database already downloaded today, skipping download.".format(today)
-        elif params.update_db:
-            if download_date is None:
-                log_text = "{}: no database found. Downloading database".format(today)
-            else:
-                log_text = "{}: found database updated {}, updating.".format(today, download_date)
-            shell("pyngoST.py -d -n {} -cc {}".format(params.mlst_db, params.ngstar_cc))
-            with open(download_date_file, 'w') as f:
-                f.write("{}: database downloaded.".format(today))
-        elif download_date is None or not os.path.exists(params.mlst_db):
-            raise ValueError("Database file missing, please point to pyngost database or set update_db to True.")
-        else:
-            log_text = "Database update not requested: using database downloaded on {}.".format(download_date)
-        shell("claMLST create --force {params.mlst_db}/pymlst_rplf {params.mlst_db}/rplf/rplf.txt {params.mlst_db}/rplf/rplF.tfa")
-        shell("claMLST create --force {params.mlst_db}/pymlst_mlst {params.mlst_db}/mlst/mlst.txt {params.mlst_db}/mlst/abcZ.tfa "
-              "{params.mlst_db}/mlst/adk.tfa {params.mlst_db}/mlst/aroE.tfa {params.mlst_db}/mlst/fumC.tfa "
-              "{params.mlst_db}/mlst/gdh.tfa {params.mlst_db}/mlst/pdhC.tfa {params.mlst_db}/mlst/pgm.tfa ")
-        with open(output.updated_db, 'w') as o, open(input.mlst) as mlst_log, open(input.rplf) as rplf_log:
-            o.write("mlst updated: " + mlst_log.readline())
-            o.write("rplf updated: " + rplf_log.readline())
-            o.write(log_text)
+    script:
+        "scripts/update_db_all.py"
 
 
 
@@ -205,6 +200,7 @@ rule qc:
     threads: 24
     run:
         import subprocess
+        import os
         read1 = "{}/{}_R1.fastq.gz".format(params.read_dir, wildcards.sample)
         read2 = "{}/{}_R2.fastq.gz".format(params.read_dir, wildcards.sample)
         if params.read_dir != "none":
@@ -215,11 +211,16 @@ rule qc:
             subprocess.Popen("mkdir -p step1_fastqc && touch {} && touch {}".format(output.qc1, output.qc2), shell=True).wait()
             subprocess.Popen("quast.py {} -r {} -g {} -L -o step1_qc/{}_quast/ --threads {}".format(
                 input.scaffolds, params.quast_fasta, params.quast_gff, wildcards.sample, threads), shell=True).wait()
+        if not os.path.exists(output.quast):
+            with open(output.quast, 'w') as o:
+                o.write("\n")
+
 
 rule assemble_reads:
     params:
         read_dir = config["read_dir"],
-        contig_dir = config["contig_dir"]
+        contig_dir = config["contig_dir"],
+        ref_fasta = workflow.source_path("data/ref.fasta"),
     output:
         scaffolds = "step2_assembly/metaspades_{sample}/scaffolds.fasta"
     threads: 24
@@ -241,24 +242,50 @@ rule assemble_reads:
             if not os.path.exists(output.scaffolds):
                 with open(output.scaffolds, 'w') as o:
                     o.write(">ntc\nnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnn\n")
+            # shell("minimap2 -ax sr -t {} {params.ref_fasta} {}/{}_R1.fastq.gz {}/{}_R2.fastq.gz | \
+            # samtools view -bS - | samtools sort -o step2_assembly/{}.bam".format(threads, params.read_dir, wildcards.sample,
+            #     params.read_dir, wildcards.sample, wildcards.sample))
+            # shell("samtools index step2_assembly/{}.bam".format(wildcards.sample))
+            # shell("pilon ")
+
+
 
 
 
 rule ng_typing:
     input:
         updated_db = "database.log",
-        scaffolds = "step2_assembly/metaspades_{sample}/scaffolds.fasta",
+        scaffolds = "step2_assembly/metaspades_{sample}/scaffolds.fasta"
     params:
+        read_dir = config["read_dir"],
         mlst_db = config["mlst_db"]
     output:
         pyngo_out = "step3_typing/{sample}_pyngo.tsv",
-        mlst= "step3_typing/{sample}_mlst.tsv",
-        rplf= "step3_typing/{sample}_rplf.tsv"
+        rplf = "step3_typing/{sample}_rplf.tsv",
+        pymlst_mlst = "step3_typing/{sample}_pymlst_mlst.tsv",
+        pymlst_ngstar = "step3_typing/{sample}_pymlst_ngstar.tsv",
+        pymlst_ngmast = "step3_typing/{sample}_pymlst_ngmast.tsv",
+        pymlst_rplf = "step3_typing/{sample}_pymlst_rplf.tsv"
+
     threads: 24
-    shell:
-        "pyngoST.py -i {input.scaffolds} -s NG-STAR,MLST,NG-MAST -c -m -b -a -o {wildcards.sample}_pyngo.tsv -q step3_typing -t {threads} -p {params.mlst_db} && "
-        "claMLST search -o {output.mlst} {params.mlst_db}/pymlst_mlst {input.scaffolds} && "
-        "claMLST search -o {output.rplf} {params.mlst_db}/pymlst_rplf {input.scaffolds}"
+    run:
+        shell("pyngoST.py -i {input.scaffolds} -s NG-STAR,MLST,NG-MAST -c -m -b -a -o {wildcards.sample}_pyngo.tsv -q step3_typing -t {threads} -p {params.mlst_db}")
+        shell("claMLST search -o {output.rplf} {params.mlst_db}/pymlst/pymlst_rplf {input.scaffolds}")
+        if params.read_dir != "none":
+            read1 = "{}/{}_R1.fastq.gz".format(params.read_dir, wildcards.sample)
+            read2 = "{}/{}_R2.fastq.gz".format(params.read_dir, wildcards.sample)
+            shell("claMLST search2 -c 1 -i 1 -r 50 -o {} {}/pymlst/pymlst_mlst {} {}".format(output.pymlst_mlst, params.mlst_db, read1, read2))
+            shell("claMLST search2 -c 1 -i 1 -r 50 -o {} {}/pymlst/pymlst_ngstar {} {}".format(output.pymlst_ngstar, params.mlst_db, read1, read2))
+            shell("claMLST search2 -c 1 -i 1 -r 50 -o {} {}/pymlst/pymlst_ngmast {} {}".format(output.pymlst_ngmast, params.mlst_db, read1, read2))
+            shell("claMLST search2 -c 1 -i 1 -r 50 -o {} {}/pymlst/pymlst_rplf {} {}".format(output.pymlst_rplf, params.mlst_db, read1, read2))
+        else:
+            shell("claMLST search -o {output.pymlst_mlst} {params.mlst_db}/pymlst/pymlst_mlst {input.scaffolds}")
+            shell("claMLST search -o {output.pymlst_ngstar} {params.mlst_db}/pymlst/pymlst_ngstar {input.scaffolds}")
+            shell("claMLST search -o {output.pymlst_ngmast} {params.mlst_db}/pymlst/pymlst_ngmast {input.scaffolds}")
+            shell("claMLST search -o {output.pymlst_rplf} {params.mlst_db}/pymlst/pymlst_rplf {input.scaffolds}")
+
+
+
 
 rule abricate:
     input:
@@ -421,6 +448,10 @@ rule create_output:
         qc2 = "step1_qc/{sample}_R2_fastqc.html",
         scaffolds = "step2_assembly/metaspades_{sample}/scaffolds.fasta",
         pyngo = "step3_typing/{sample}_pyngo.tsv",
+        pymlst_mlst = "step3_typing/{sample}_pymlst_mlst.tsv",
+        pymlst_ngstar = "step3_typing/{sample}_pymlst_ngstar.tsv",
+        pymlst_ngmast = "step3_typing/{sample}_pymlst_ngmast.tsv",
+        pymlst_rplf = "step3_typing/{sample}_pymlst_rplf.tsv",
         rplf = "step3_typing/{sample}_rplf.tsv",
         abricate = "step4_abricate/{sample}_abricate.txt",
         ppng_cov = "step5_cov/{sample}_ppng.cov",
@@ -433,7 +464,8 @@ rule create_output:
         mlst_dir = config["mlst_db"],
         sample = "{sample}",
         positions = config["positions"],
-        read_dir = config["read_dir"]
+        read_dir = config["read_dir"],
+        ngstar_cc = workflow.source_path("data/240513_NGSTAR_CC_updated.csv")
     output:
         tsv = "step6_output/{sample}_summary.tsv"
     script:

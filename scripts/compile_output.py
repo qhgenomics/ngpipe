@@ -11,9 +11,79 @@ for i in snakemake.params.positions.split(','):
 
 outstring = snakemake.params.sample
 
+
+pymlst_dict = {}
+with open("step3_typing/{}_pymlst_mlst.tsv".format(snakemake.params.sample)) as f:
+    header = f.readline().rstrip().split("\t")[2:]
+    body = f.readline().rstrip().split("\t")[2:]
+    for i, j in zip(header, body):
+        if not ';' in j and not j == "new" and not j == '':
+            pymlst_dict[i] = j
+
+with open("step3_typing/{}_pymlst_ngstar.tsv".format(snakemake.params.sample)) as f:
+    header = f.readline().rstrip().split("\t")[2:]
+    body = f.readline().rstrip().split("\t")[2:]
+    for i, j in zip(header, body):
+        if not ';' in j and not j == "new" and not j == '':
+            pymlst_dict[i.split('-')[0]] = j
+
+with open("step3_typing/{}_pymlst_ngmast.tsv".format(snakemake.params.sample)) as f:
+    header = f.readline().rstrip().split("\t")[2:]
+    body = f.readline().rstrip().split("\t")[2:]
+    for i, j in zip(header, body):
+        if not ';' in j and not j == "new" and not j == '':
+            pymlst_dict[i] = j
+
+with open("step3_typing/{}_pymlst_rplf.tsv".format(snakemake.params.sample)) as f:
+    header = f.readline().rstrip().split("\t")[2:]
+    body = f.readline().rstrip().split("\t")[2:]
+    for i, j in zip(header, body):
+        if not ';' in j and not j == "new" and not j == '':
+            pymlst_dict[i] = j
+
+
+
 with open(snakemake.input.pyngo) as f:
-    header = f.readline().rstrip()
+    header = f.readline().rstrip().split("\t")
     body = f.readline().rstrip().split("\t")
+    new_body = []
+    for i, j in zip(header, body):
+        if j.endswith("-1") and i in pymlst_dict:
+            new_body.append(pymlst_dict[i])
+        else:
+            new_body.append(j)
+    if body[2:9] != new_body[2:9]:
+        new_st = '-'
+        with open(os.path.join(snakemake.params.mlst_dir,  "NGSTAR_profiles.tab")) as profile:
+            for line in profile:
+                if line.split()[1:8] == new_body[2:9]:
+                    new_st = line.split()[0]
+                    break
+        new_body[1] = new_st
+        new_cc = '-'
+        with open(snakemake.params.ngstar_cc) as cc:
+            for line in cc:
+                if line.split(',')[0] == new_st:
+                    new_cc = line.rstrip().split(',')[1]
+                    break
+        new_body[9] = new_cc
+    if body[12:19] != new_body[12:19]:
+        new_st = '-'
+        with open(os.path.join(snakemake.params.mlst_dir, "MLST_profiles.tab")) as profile:
+            for line in profile:
+                if line.split()[1:8] == new_body[12:19]:
+                    new_st = line.split()[0]
+                    break
+        new_body[11] = new_st
+    if body[20:22] != new_body[20:22]:
+        new_st = '-'
+        with open(os.path.join(snakemake.params.mlst_dir, "NGMAST_profiles.tab")) as profile:
+            for line in profile:
+                if line.split()[1:3] == new_body[20:22]:
+                    new_st = line.split()[0]
+                    break
+        new_body[19] = new_st
+    body = new_body
     ngstar_alleles = body[2:9]
     ngstar_st = body[1]
     outstring += "\t" + "\t".join(body[1:])
