@@ -172,12 +172,12 @@ rule update_ngstar:
 rule update_db_all:
     input:
         rplf = "rplf.log",
-        ngstar = "ngstar.log",
-        bigsdb_tokens = config["bigsdb_tokens"]
+        ngstar = "ngstar.log"
     params:
         mlst_db = config["mlst_db"],
         update_db = config["update_db"],
-        ngstar_cc = workflow.source_path("data/240513_NGSTAR_CC_updated.csv")
+        ngstar_cc = workflow.source_path("data/240513_NGSTAR_CC_updated.csv"),
+        bigsdb_tokens = config["bigsdb_tokens"]
     output:
         updated_db = "database.log",
     script:
