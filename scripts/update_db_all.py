@@ -18,7 +18,8 @@ elif snakemake.params.update_db:
         log_text = "{}: no database found. Downloading database".format(today)
     else:
         log_text = "{}: found database updated {}, updating.".format(today, download_date)
-    subprocess.Popen("pyngoST.py -d -n {} -cc {}".format(snakemake.params.mlst_db, snakemake.params.ngstar_cc), shell=True).wait()
+    subprocess.Popen("pyngoST.py -d -n {} -cc {} -bsdb {}".format(snakemake.params.mlst_db, snakemake.params.ngstar_cc,
+                                                                  snakemake.params.bigsdb_tokens), shell=True).wait()
     with open(download_date_file, 'w') as f:
         f.write("{}: database downloaded.".format(today))
 elif download_date is None or not os.path.exists(snakemake.params.mlst_db):
