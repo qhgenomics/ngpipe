@@ -163,7 +163,8 @@ rule update_ngstar:
     params:
         mlst_dir = config["mlst_db"],
         update_db = config["update_db"],
-        db = "ngstar"
+        db = "ngstar",
+        bigsdb_tokens = config["bigsdb_tokens"]
     output:
         log = "ngstar.log",
     script:
