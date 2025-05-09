@@ -75,7 +75,8 @@ with open("{}/NGMAST_profiles.tab".format(snakemake.params.mlst_db)) as f, open(
     o.write("ST\tPOR\tTBPB\n")
     f.readline()
     for line in f:
-        o.write(line)
+        if line.rstrip() != "":
+            o.write(line)
 subprocess.Popen("claMLST create --force {mlst_db}/pymlst/pymlst_ngmast {mlst_db}/pymlst/NGMAST_profiles_pymlst.tab {mlst_db}/POR.fas "
                  "{mlst_db}/TBPB.fas".format(mlst_db=snakemake.params.mlst_db), shell=True).wait()
 
