@@ -34,7 +34,8 @@ subprocess.Popen("claMLST create --force {mlst_db}/pymlst/pymlst_rplf {mlst_db}/
 # create MLST pymlst database
 with open("{}/MLST_profiles.tab".format(snakemake.params.mlst_db)) as f, open("{}/pymlst/MLST_profiles_pymlst.tab".format(snakemake.params.mlst_db), 'w') as o:
     for line in f:
-        o.write("\t".join(line.split("\t")[:8]) + "\n")
+        if line.rstrip() != "":
+            o.write("\t".join(line.split("\t")[:8]) + "\n")
 subprocess.Popen("claMLST create --force {mlst_db}/pymlst/pymlst_mlst {mlst_db}/pymlst/MLST_profiles_pymlst.tab {mlst_db}/abcZ.fas "
     "{mlst_db}/adk.fas {mlst_db}/aroE.fas {mlst_db}/fumC.fas {mlst_db}/gdh.fas {mlst_db}/pdhC.fas {mlst_db}/pgm.fas".format(
     mlst_db=snakemake.params.mlst_db), shell=True).wait()
@@ -46,9 +47,10 @@ with open("{}/NGSTAR_profiles.tab".format(snakemake.params.mlst_db)) as f, open(
         o.write("\t{}_pymlst".format(i))
     o.write("\n")
     for line in f:
-        ST = line.split()[0]
-        penA = "{:.3f}".format(float(line.split()[1])).replace('.', '')
-        o.write("\t".join([ST, penA] + line.split()[2:-1]) + "\n")
+        if line.rstrip() != '':
+            ST = line.split()[0]
+            penA = "{:.3f}".format(float(line.split()[1])).replace('.', '')
+            o.write("\t".join([ST, penA] + line.split()[2:-1]) + "\n")
 with open("{}/penA.fas".format(snakemake.params.mlst_db)) as f, open("{}/pymlst/penA_pymlst.fas".format(snakemake.params.mlst_db), 'w') as o:
     for line in f:
         if line.startswith(">"):
