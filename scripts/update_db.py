@@ -4,7 +4,7 @@ import json
 from openpyxl import load_workbook
 import io
 import datetime
-
+import subprocess
 
 db = snakemake.params.db
 if db == "ngstar":
