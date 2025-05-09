@@ -150,7 +150,8 @@ rule update_rplf:
     params:
         mlst_dir = config["mlst_db"],
         update_db = config["update_db"],
-        db = "rplf"
+        db = "rplf",
+        bigsdb_tokens = config["bigsdb_tokens"]
     output:
         log = "rplf.log"
     script:
