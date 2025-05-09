@@ -32,8 +32,9 @@ else:
 
 
 if snakemake.params.update_db != "false":
-    with urlopen("https://rest.pubmlst.org/db/pubmlst_neisseria_seqdef/schemes/" + scheme) as response:
-        response_content = response.read().decode('utf-8')
+    response = subprocess.check_output('bigsdb_downloader.py --key_name PubMLST --site PubMLST --token_dir {} --url "{}"'.format(
+            snakemake.params.bigsdb_tokens, "https://rest.pubmlst.org/db/pubmlst_neisseria_seqdef/schemes/" + scheme), shell=True)
+    response_content = response.decode('utf-8')
     scheme_info = json.loads(response_content)
     online_version = scheme_info["last_added"]
 
@@ -44,8 +45,8 @@ if snakemake.params.update_db == "false":
         o.write("Database update not requested, using existing database from {}.\n".format(version))
 elif version != online_version and db != "ngstar":
     profiles = scheme_info["profiles_csv"]
-    response = urlopen(profiles)
-    data = response.read()
+    data = subprocess.check_output('bigsdb_downloader.py --key_name PubMLST --site PubMLST --token_dir {} --url "{}"'.format(
+            snakemake.params.bigsdb_tokens, profiles), shell=True)
     profiles_local = os.path.join(dbdir, db + '.txt')
     mlst_ccs = []
     rplf_species = []
@@ -71,11 +72,14 @@ elif version != online_version and db != "ngstar":
                 o.write("\t".join(i) + "\n")
     for i in scheme_info['loci']:
         loci = i.split('/')[-1]
-        response = urlopen(i)
-        loci_info = json.loads(response.read().decode('utf-8'))
+        response = subprocess.check_output(
+            'bigsdb_downloader.py --key_name PubMLST --site PubMLST --token_dir {} --url "{}"'.format(
+                snakemake.params.bigsdb_tokens, i), shell=True)
+        loci_info = json.loads(response.decode('utf-8'))
         loci_fasta = loci_info["alleles_fasta"]
-        response = urlopen(loci_fasta)
-        data = response.read()
+        data = subprocess.check_output(
+            'bigsdb_downloader.py --key_name PubMLST --site PubMLST --token_dir {} --url "{}"'.format(
+                snakemake.params.bigsdb_tokens, loci_fasta), shell=True)
         loci_local = os.path.join(dbdir, loci + '.tfa')
         loci_local = loci_local.replace("'", "")
         loci_local = loci_local.replace("NG-MAST_", "")
