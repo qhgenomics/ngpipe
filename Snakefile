@@ -278,14 +278,14 @@ rule ng_typing:
             read1 = "{}/{}_R1.fastq.gz".format(params.read_dir, wildcards.sample)
             read2 = "{}/{}_R2.fastq.gz".format(params.read_dir, wildcards.sample)
             shell("claMLST search2 -c 1 -i 1 -r 50 -o {0} {1}/pymlst/pymlst_mlst {2} {3} || touch {0}".format(output.pymlst_mlst, params.mlst_db, read1, read2))
-            shell("claMLST search2 -c 1 -i 1 -r 50 -o {} {}/pymlst/pymlst_ngstar {2} {3} || touch {0}".format(output.pymlst_ngstar, params.mlst_db, read1, read2))
-            shell("claMLST search2 -c 1 -i 1 -r 50 -o {} {}/pymlst/pymlst_ngmast {2} {3} || touch {0}".format(output.pymlst_ngmast, params.mlst_db, read1, read2))
-            shell("claMLST search2 -c 1 -i 1 -r 50 -o {} {}/pymlst/pymlst_rplf {2} {3} || touch {0}".format(output.pymlst_rplf, params.mlst_db, read1, read2))
+            shell("claMLST search2 -c 1 -i 1 -r 50 -o {0} {1}/pymlst/pymlst_ngstar {2} {3} || touch {0}".format(output.pymlst_ngstar, params.mlst_db, read1, read2))
+            shell("claMLST search2 -c 1 -i 1 -r 50 -o {0} {1}/pymlst/pymlst_ngmast {2} {3} || touch {0}".format(output.pymlst_ngmast, params.mlst_db, read1, read2))
+            shell("claMLST search2 -c 1 -i 1 -r 50 -o {0} {1}/pymlst/pymlst_rplf {2} {3} || touch {0}".format(output.pymlst_rplf, params.mlst_db, read1, read2))
         else:
             shell("claMLST search -o {0} {1}/pymlst/pymlst_mlst {2} || touch {0}".format(output.pymlst_mlst, params.mlst_db, input.scaffolds))
-            shell("claMLST search -o {0} {1}/pymlst/pymlst_ngstar {2} || touch {0}".format(output.pymlst_mlst, params.mlst_db, input.scaffolds))
-            shell("claMLST search -o {0} {1}/pymlst/pymlst_ngmast {2} || touch {0}".format(output.pymlst_mlst, params.mlst_db, input.scaffolds))
-            shell("claMLST search -o {0} {1}/pymlst/pymlst_rplf {2} || touch {0}".format(output.pymlst_mlst, params.mlst_db, input.scaffolds))
+            shell("claMLST search -o {0} {1}/pymlst/pymlst_ngstar {2} || touch {0}".format(output.pymlst_ngstar, params.mlst_db, input.scaffolds))
+            shell("claMLST search -o {0} {1}/pymlst/pymlst_ngmast {2} || touch {0}".format(output.pymlst_ngmast, params.mlst_db, input.scaffolds))
+            shell("claMLST search -o {0} {1}/pymlst/pymlst_rplf {2} || touch {0}".format(output.pymlst_rplf, params.mlst_db, input.scaffolds))
 
 
 
