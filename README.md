@@ -31,6 +31,7 @@ Clone this repository
 
 ## Usage
 
+
 #### To run ngpipe on a list of contigs
 1. Create text file /path/to/samples.txt
 2. Enter a list of samples to process, one on each line.
@@ -52,14 +53,12 @@ Clone this repository
 
 
 ## Implementation
+![7b49f8df-5f82-4e40-a5a2-d75a1c562c0a](https://github.com/user-attachments/assets/852abbee-b5d7-4b43-a868-65e6a1cbef6c)
 
-```mermaid
----
-config:
-  theme: redux
-  layout: elk
----
-flowchart TD
+
+```
+mermaid
+flowchart-elk TD
     A(["Start"]) --> B("Reads<br>(fastq)") & D("Contigs (fasta)")
     B --> C["<b>Assembly</b> <br> Shovill/<br>Spades"] & F["<b>Typing</b><br>pyMLST"] & I["<b>QC</b><br> fastQC"] & K["<b>Alignment</b><br>Minimap2"] & P["<b>Alignment</b><br>Minimap2"]
     C --> D
