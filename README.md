@@ -17,14 +17,17 @@ Clone this repository
 #### networkx
 #### matplotlib
 #### Snakemake - https://github.com/snakemake/snakemake
-#### MLST - https://github.com/tseemann/mlst
+#### pyngoST
 #### Minimap
 #### Samtools
-#### Spades
+#### Shovill
+#### pymlst
+
 
 ### Optional
 #### Abricate
 #### FastQC
+#### QUAST
 
 ## Usage
 
@@ -49,17 +52,48 @@ Clone this repository
 
 
 ## Implementation
-ngpipe first checks for database updates to the NG-STAR, NG-MAST MLST and rplF schemes from pubMLST and downloads them to
-the MLST directory. It then builds a new index for the software "mlst". If this is the first time
-running ngpipe they will be downloaded from scratch.
 
-If running on read sequences, reads are assembled using Spades. This pipeline is intended to be used with amplicons and 
-thus parameters are used to primarily assemble amplicons well 
-which may result in suboptimal assemblies if run on isolate read data.
-
-Assembled contigs are then typed using Torsten Seeman's software: mlst. Plasmid-mediated resistance in gonorrhoea is 
-detected via amplification of a region encmpassing the plasmid and the blaTEM gene. This region is detected by mapping 
-reads or contigs to a reference.. The output is then compiled. Some additional processing is done to the output to 
-account for bugs in the mlst software (for example calling multiple alleles when a stop loss occurs).
-
-Finally a minimum spanning tree will be drawn using networkx.
+```mermaid
+---
+config:
+  theme: redux
+  layout: elk
+---
+flowchart TD
+    A(["Start"]) --> B("Reads<br>(fastq)") & D("Contigs (fasta)")
+    B --> C["<b>Assembly</b> <br> Shovill/<br>Spades"] & F["<b>Typing</b><br>pyMLST"] & I["<b>QC</b><br> fastQC"] & K["<b>Alignment</b><br>Minimap2"] & P["<b>Alignment</b><br>Minimap2"]
+    C --> D
+    D --> E["<b>Typing</b><br>pyngoST"] & F & G["<b>AMR prediction</b><br>Abricate"] & H["<b>QC</b><br> QUAST"]
+    I --> J["<b>QC</b><br> MultiQC"]
+    H --> J
+    n6["rplF<br>(fasta)"] --> K
+    n7["23S<br>(fasta)"] --> K
+    n8["PPNG<br>(fasta)"] --> K
+    K --> L("BAM")
+    L --> M("Coverage information") & N("Minor alleles in 23s")
+    n2["pubmlst"] --> n3["NG-MAST"] & n4["MLST"] & n5["rplF"]
+    n1["ngstar.ca"] --> E & F
+    n3 --> E & F
+    n4 --> E & F
+    n5 --> F
+    E --> T["Merge typing results"]
+    T --> O("Sequence types")
+    F --> T
+    O --> P & S("Final table")
+    P --> Q("Locus coverage information")
+    R("Version infomration") --> S
+    J --> S
+    Q --> S
+    M --> S
+    N --> S
+    n2@{ shape: cyl}
+    n1@{ shape: cyl}
+    n6@{ shape: cyl}
+    n7@{ shape: cyl}
+    n8@{ shape: cyl}
+    n3@{ shape: cyl}
+    n4@{ shape: cyl}
+    n5@{ shape: cyl}
+    style A fill:#C8E6C9
+    style S fill:#C8C8E6
+```
